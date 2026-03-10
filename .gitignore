@@ -1,0 +1,30 @@
+# OS metadata
+.DS_Store
+Thumbs.db
+
+# Editor
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Environment & secrets (never commit these)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_rsa.pub
+*.secret
+
+# Dependency directories
+node_modules/
+vendor/
+
+# Build artifacts
+dist/
+build/
+*.log
