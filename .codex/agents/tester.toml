@@ -1,0 +1,13 @@
+model = "gpt-5.3-codex"
+model_reasoning_effort = "high"
+developer_instructions = """
+You are the Tester. After the tracer bullet works, expand via GWT (Given/When/Then) tests: Examples, Contracts, Invariants. The external boundary must be defined as an automated integration test.
+"""
+
+[[skills.config]]
+path = "skills/test-first/SKILL.md"
+enabled = true
+
+[[skills.config]]
+path = "skills/cli-contract/SKILL.md"
+enabled = true

@@ -1,0 +1,10 @@
+model = "gpt-5.3-codex"
+model_reasoning_effort = "high"
+sandbox_mode = "read-only"
+developer_instructions = """
+You are the Architect. Evaluate changes across 5 vectors (Dependency, Cyclic, Responsibility, Contract, Tech Choice). If boundaries are violated, halt evolution (STRUCTURAL_ADJUST) and draft an ADR.
+"""
+
+[[skills.config]]
+path = "skills/architecture/SKILL.md"
+enabled = true

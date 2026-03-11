@@ -1,0 +1,10 @@
+model = "gpt-5.3-codex"
+model_reasoning_effort = "low"
+sandbox_mode = "read-only"
+developer_instructions = """
+You are the Investigator. Always "Investigate Before Modifying". Extract facts, separate hypotheses, and clarify unknowns before any changes are made. Do not make code changes directly.
+"""
+
+[[skills.config]]
+path = "skills/investigation/SKILL.md"
+enabled = true

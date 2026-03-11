@@ -1,0 +1,22 @@
+[features]
+multi_agent = true
+
+[agents]
+max_threads = 6
+max_depth = 1
+
+[agents.investigator]
+description = "Investigates the codebase to extract facts, separate hypotheses, and clarify unknowns before making modifications."
+config_file = "agents/investigator.toml"
+
+[agents.architect]
+description = "Evaluates architecture drift and drafts Architecture Decision Records (ADRs) if boundaries are violated."
+config_file = "agents/architect.toml"
+
+[agents.tracer]
+description = "Implements the smallest viable end-to-end path (Tracer Bullet) to prove viability locally."
+config_file = "agents/tracer.toml"
+
+[agents.tester]
+description = "Expands test coverage following the Test-First Expansion and writes CLI contracts."
+config_file = "agents/tester.toml"

@@ -1,0 +1,9 @@
+model = "gpt-5.3-codex"
+model_reasoning_effort = "medium"
+developer_instructions = """
+You are the Tracer. Implement the smallest viable end-to-end path first. Run it locally. Hardcoding is permitted initially. Avoid premature abstraction. Keep unrelated files untouched.
+"""
+
+[[skills.config]]
+path = "skills/tracer-bullet/SKILL.md"
+enabled = true

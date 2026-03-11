@@ -20,3 +20,18 @@ Evaluate every change. If it is `NO_CHANGE` or `MINOR_UPDATE`, proceed.
 - Mass file deletion
 - Widespread filesystem rewrites
 - Structural changes to live infrastructure
+
+## 5. Multi-Agent Workflows
+This repository supports custom Claude Code **Sub-agents**, mapping to the Antigravity architecture roles:
+
+- `investigator`: Optimized for read-only fact gathering.
+- `architect`: Evaluates structural boundaries and initiates ADRs if violations occur.
+- `tracer`: Constructs the smallest viable end-to-end path (Tracer Bullet).
+- `tester`: Implements exhaustive GWT tests and CLI Contracts.
+
+### Sub-agents vs. Commands
+- **Commands**: E.g., `/mission` expands a prompt macro into your *current* conversation context. Used to structure your own workflow.
+- **Sub-agents**: These are *isolated, separate Claude sessions* with specialized system prompts, tools, and cost profiles. Used to delegate complete chunks of work to another "persona" (often in the background). 
+
+**Usage Example:**
+> "Please spawn the `investigator` to read through the `src/domain` codebase in the background, and report back the facts without making any code modifications."
