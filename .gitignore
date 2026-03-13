@@ -31,3 +31,5 @@ build/
 /
 # Agent Reports
 .agent/reports/
+.codex/reports/
+.claude/reports/

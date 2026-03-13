@@ -14,5 +14,5 @@ This command scans the project structure and initializes the architectural conte
 3. **Initialize Governance Files**
    - Draft `rules.md` (guardrails) and `ADR-001 (Baseline)`.
 4. **Output Discovery Report**
-   - Store the report at `.agent/reports/arch-discovery-latest.md`.
+   - Store the report at `.claude/reports/arch-discovery-latest.md`.
    - **STOP** and wait for human confirmation.

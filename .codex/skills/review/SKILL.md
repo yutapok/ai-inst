@@ -28,7 +28,7 @@ When instructed to review the code, evaluate it against the following dimensions
 
 ## Output Format
 
-The output must be an actionable Markdown checklist formatted as `.agent/reports/ql-report-latest.md`. Use `[ ]` for each finding so the human can easily triage and check `[x]` the ones they want to fix.
+The output must be an actionable Markdown checklist formatted as `.codex/reports/ql-report-latest.md`. Use `[ ]` for each finding so the human can easily triage and check `[x]` the ones they want to fix.
 
 ```markdown
 # QL Report [Date]

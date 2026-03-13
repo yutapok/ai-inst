@@ -18,17 +18,17 @@ All implementations in this phase must adhere to the following standards:
 1. **Investigation**
    - Investigate the current state of the relevant code and repository.
    - Organize known facts and identify uncertainties.
-   - *(Required skill: `.agent/skills/investigation/SKILL.md`)*
+   - *(Required skill: `.codex/skills/investigation/SKILL.md`)*
 
 2. **Fix the CLI Contract (Observable Specs)**
    - Define the target CLI inputs, expected outputs, exit codes, and error classifications.
    - **Crucially, implement this contract as an automated integration test (e.g., in `tests/integration/...`).**
-   - *(Required skill: `.agent/skills/cli-contract/SKILL.md`)*
+   - *(Required skill: `.codex/skills/cli-contract/SKILL.md`)*
 
 3. **Implement and Verify the Tracer Bullet**
    - Write the "minimal working code" that connects from the CLI down to the bottom layer without premature abstraction or splitting.
    - Run the integration tests (e.g., `go test tests/integration/...`) locally to ensure the code behaves exactly according to the CLI contract.
-   - *(Required skill: `.agent/skills/tracer-bullet/SKILL.md`)*
+   - *(Required skill: `.codex/skills/tracer-bullet/SKILL.md`)*
 
 4. **Output Plan and Stop**
    - Output the artifact using the `mission.md` format below and **STOP** working.

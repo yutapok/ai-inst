@@ -18,15 +18,15 @@ Depending on the user's request, identify the primary mode:
 1. **Fact Gathering & Analysis**
    - Read relevant code, logs, and config files.
    - Apply specific heuristics from the investigation skill (Impact scoping, 5 Whys, Trace data flow).
-   - *(Required skill: `.agent/skills/investigation/SKILL.md`)*
+   - *(Required skill: `.codex/skills/investigation/SKILL.md`)*
 
 2. **Generate Structured Report**
-   - Output an `.agent/reports/investigate-latest.md` using the format below.
+   - Output an `.codex/reports/investigate-latest.md` using the format below.
    - **STOP** and wait for human direction.
 
 ---
 
-## Output Format (`.agent/reports/investigate-latest.md`)
+## Output Format (`.codex/reports/investigate-latest.md`)
 
 ```markdown
 # Investigation Report: [Title]

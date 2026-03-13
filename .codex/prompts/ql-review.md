@@ -12,10 +12,10 @@ This workflow initiates a Quality Loop (QL) review. It performs a comprehensive 
    - Read the codebase or the specified section.
    - **Search for "Implied ADR" notes** in `/tmp/implied-adr-*.md`.
    - Use the `review` skill to evaluate Architecture, Security, and Code Quality.
-   - *(Required skill: `.agent/skills/review/SKILL.md`)*
+   - *(Required skill: `.codex/skills/review/SKILL.md`)*
 
 2. **Generate Report**
-   - Output the findings as a triagable checklist in `.agent/reports/ql-report-latest.md`.
+   - Output the findings as a triagable checklist in `.codex/reports/ql-report-latest.md`.
    - Use `[ ]` syntax so the user can select items to fix or ADRs to formalize.
    - **STOP** and wait for human triage.
 
@@ -23,12 +23,12 @@ This workflow initiates a Quality Loop (QL) review. It performs a comprehensive 
 
 # /apply-fix
 
-This command is used AFTER the human has triaged the `.agent/reports/ql-report-latest.md` file (by checking `[x]` on selected items).
+This command is used AFTER the human has triaged the `.codex/reports/ql-report-latest.md` file (by checking `[x]` on selected items).
 
 ## Agent Execution Steps
 
 1. **Read Triage Selection**
-   - Open `.agent/reports/ql-report-latest.md` and identify all items checked as `[x]`.
+   - Open `.codex/reports/ql-report-latest.md` and identify all items checked as `[x]`.
 
 2. **Execute Fixes / Formalize ADRs**
    - For each checked item, plan the fix or create the formal ADR.

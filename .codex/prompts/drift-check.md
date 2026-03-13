@@ -17,7 +17,7 @@ This workflow verifies whether all changes added in `/expand` adhere to the exis
      - Public Contract Break
      - Technology Choice Deviation
    - **If no formal ADRs exist, use the baseline rules set by `/init-arch` or identified via discovery.**
-   - *(Required skill: `.agent/skills/architecture/SKILL.md`)*
+   - *(Required skill: `.codex/skills/architecture/SKILL.md`)*
 
 2. **Drift Classification**
    - Classify the changes into one of the following based on the review results:
@@ -29,11 +29,11 @@ This workflow verifies whether all changes added in `/expand` adhere to the exis
    - If classified as `STRUCTURAL_ADJUST`, automatically draft an Architecture Decision Record (ADR) and propose an architectural evolution (arch-evolve).
 
 4. **Output Report and Stop**
-   - Output the artifact to `.agent/reports/drift-report-latest.md` using the format below and **STOP** working.
+   - Output the artifact to `.codex/reports/drift-report-latest.md` using the format below and **STOP** working.
 
 ---
 
-## Output Format (`.agent/reports/drift-report-latest.md`)
+## Output Format (`.codex/reports/drift-report-latest.md`)
 
 ```markdown
 # Drift Classification

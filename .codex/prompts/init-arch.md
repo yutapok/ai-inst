@@ -23,12 +23,12 @@ This workflow scans the current project structure to discover implicit architect
 
 4. **Output Discovery Report**
    - Present the identified structure and the drafted governance files to the human.
-   - Output the discovery report to `.agent/reports/arch-discovery-latest.md`.
+   - Output the discovery report to `.codex/reports/arch-discovery-latest.md`.
    - **STOP** and wait for human confirmation.
 
 ---
 
-## Output Format (`.agent/reports/arch-discovery-latest.md`)
+## Output Format (`.codex/reports/arch-discovery-latest.md`)
 
 ```markdown
 # Architectural Discovery Report

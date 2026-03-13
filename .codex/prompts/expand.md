@@ -13,7 +13,7 @@ This workflow expands the "minimal working code (tracer bullet)" created in `/mi
    - Extend the code by adding unit/component test cases to the existing tracer bullet.
    - Detail the specifications in the following order: `Examples` → `Contracts` → `Invariants`.
    - **Autonomously run the integration tests (e.g., `go test tests/integration/...`) after every significant change to ensure the CLI Contract guardrail remains intact.**
-   - *(Required skill: `.agent/skills/test-first/SKILL.md`)*
+   - *(Required skill: `.codex/skills/test-first/SKILL.md`)*
 
 2. **Self-Review and Fix Iteration (Defect Prevention)**
    - Conduct a Defect Prevention Self-Review during implementation, focusing on:

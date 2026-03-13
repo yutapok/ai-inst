@@ -14,4 +14,4 @@ This command performs an architecture drift check against guardrails.
    - NO_CHANGE | MINOR_UPDATE | STRUCTURAL_ADJUST.
 4. **Output Report & Stop**
    - If STRUCTURAL_ADJUST, draft an ADR.
-   - Output report to `.agent/reports/drift-report-latest.md` and **STOP**.
+   - Output report to `.claude/reports/drift-report-latest.md` and **STOP**.

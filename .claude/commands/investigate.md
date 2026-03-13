@@ -12,5 +12,5 @@ This command is for maintenance, incident response, research, and QA.
    - Read `.claude/skills/investigation/SKILL.md`.
    - Apply specific heuristics based on mode.
 3. **Generate Report & Stop**
-   - Output report to `.agent/reports/investigate-latest.md`.
+   - Output report to `.claude/reports/investigate-latest.md`.
    - **STOP** and wait for human direction.
