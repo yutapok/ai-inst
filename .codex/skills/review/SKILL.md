@@ -15,7 +15,7 @@ When instructed to review the code, evaluate it against the following dimensions
 - **Trade-off Analysis**: Are there better patterns (caching, async, event-driven) for the current requirements?
 - **Coupling**: Are modules loosely coupled?
 - **Distributed Processing**: Are there eventual consistency issues in distributed operations?
-- **Implied ADR Formalization**: Review any temporary files in `/tmp/implied-adr-*.md`. Determine if these decisions should be promoted to a formal ADR, modified, or discarded.
+- **Implied ADR Formalization**: Review any temporary files in `.codex/reports/tmp/implied-adr/implied-adr-*.md`. Determine if these decisions should be promoted to a formal ADR, modified, or discarded.
 
 ### 2. Security
 - **Vulnerabilities**: Are there known patterns of vulnerability (SQLi, XSS, etc.)?

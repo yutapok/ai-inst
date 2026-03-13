@@ -10,7 +10,7 @@ This command initiates a Quality Loop (QL) review (Asynchronous).
    - Read `.claude/skills/review/SKILL.md`.
 2. **Perform Review**
    - Evaluate Architecture, Security, and Code Quality.
-   - Search for "Implied ADR" notes in `/tmp/implied-adr-*.md`.
+   - Search for "Implied ADR" notes in `.claude/reports/tmp/implied-adr/implied-adr-*.md`.
 3. **Generate Report & Stop**
    - Output triagable checklist to `.claude/reports/ql-report-latest.md`.
    - **STOP** and wait for human triage.

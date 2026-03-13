@@ -10,7 +10,7 @@ This workflow initiates a Quality Loop (QL) review. It performs a comprehensive 
 
 1. **Perform Review**
    - Read the codebase or the specified section.
-   - **Search for "Implied ADR" notes** in `/tmp/implied-adr-*.md`.
+   - Search for "Implied ADR" notes in `.codex/reports/tmp/implied-adr/implied-adr-*.md`.
    - Use the `review` skill to evaluate Architecture, Security, and Code Quality.
    - *(Required skill: `.codex/skills/review/SKILL.md`)*
 

@@ -37,7 +37,7 @@ Triggers that permit evolution include:
 
 ## 4. Implied ADRs (Temporary Records)
 During phases of high uncertainty (e.g., Tracer Bullet development), architectural decisions may be made rapidly. To ensure these decisions are not lost:
-- **Record**: Create a temporary note in `/tmp/implied-adr-[Topic]-[Date].md` (keep volatile).
+- **Record**: Create a temporary note in `.agent/reports/tmp/implied-adr/implied-adr-[Topic]-[Date].md` (keep volatile).
 - **Content**: Briefly record the context, the chosen path, and any immediate trade-offs observed.
 - **Transition**: These notes are *not* formal architecture. They must be reviewed and either formalized into an ADR or discarded during the `/ql-review` phase once the implementation is validated.
 
