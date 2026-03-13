@@ -5,7 +5,7 @@ description: Criteria for drift classification, ADR creation, and architecture e
 
 # Architecture Governance Procedures
 
-Architecture is not a rigid blueprint, but rather a "minimal guardrail" designed to prevent implementations from straying too far. You must evaluate whether code changes fit within these guardrails, and safely evolve the architecture only when necessary.
+As an AI agent, you must evaluate whether your code changes fit within the existing architectural guardrails of the project, and safely evolve the architecture only when necessary.
 
 ## 1. Drift Verification
 Evaluate the implementation across these 5 vectors to ensure no deviation has occurred.

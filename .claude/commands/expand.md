@@ -1,14 +1,16 @@
 # /expand command
 
-This command triggers the "Test-First Expansion" phase on a working Tracer Bullet (the minimal viable path).
+This command expands the tracer bullet using Test-First principles.
 
-When executing this command, Claude must adhere to the following sequence:
+> **Task**: $ARGUMENTS
 
-1. **Activate relevant Skills**: Ensure you have reviewed `cli-contract.md` and `test-first.md`.
-2. **Identify the Tracer Bullet**: Analyze the recently created logic (which should currently be minimal and lacking robust edge-case handling).
-3. **Define CLI Contract Integration Test**: First, write an integration test that asserts the external inputs, `stdout`, `stderr`, and exit codes.
-4. **Expand Tests in Order**:
-   - Write tests for Representative Examples (Happy Path)
-   - Write tests enforcing Contracts (Abnormal flow, errors)
-   - Write tests protecting Invariants (State rules)
-5. **Implement Refactoring**: Refactor the initial Tracer Bullet code, introducing encapsulation and modules if needed, to pass the tests. Keep tests structured in Given/When/Then (GWT) format.
+## Agent Execution Steps
+
+1. **Activate Test-First Skill**
+   - Read `.claude/skills/test-first/SKILL.md`.
+   - Loop through: Examples → Contracts → Invariants.
+   - Run integration tests after every significant change.
+2. **Self-Review & Fix**
+   - Conduct a Defect Prevention review (Observability, Data, Concurrency).
+3. **Output Result & Stop**
+   - Output `expand_result.md` and **STOP**.

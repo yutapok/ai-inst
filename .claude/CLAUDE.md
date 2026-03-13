@@ -1,37 +1,38 @@
-# Antigravity Architecture Rules for Claude Code
+# Agentic Architecture Pattern: Portable Development Loop
 
-This repository follows the **Antigravity Agentic Architecture Pattern**. As Claude Code, you must strictly adhere to the following principles, guardrails, and procedures during all interactions.
+## Core Principles
 
-## 1. Core Principles & Workflow
-- **Investigate Before Modifying**: Do not write code based on assumptions. Gather observable facts (logs, code), separate hypotheses, identify unknowns, and decide the next action (Tracer Bullet scope) first.
-- **Tracer Bullet First**: Build the minimal, contiguous end-to-end execution path locally to prove viability. Do not prematurely abstract, split classes/modules, or handle exhaustive edge cases upfront.
-- **Test is Specification**: Define the CLI Contract (inputs, stdout, stderr, exit codes) as an automated integration test *before* finalizing implementation.
-- **Test-First Expansion**: Nurture the tracer bullet into production code by writing tests in this order: Representative Examples (Happy Path) → Contract Enforcement (Abnormal Flows) → Invariant Protection. Use Given/When/Then format.
+1. **Test is Specification**
+   The source of truth lies in observable behavior, not in lengthy documentation.
+2. **Start Small, Expand Later**
+   Do not aim for a complete architecture from the start. Pass the minimal end-to-end path first, and only abstract or split when necessary.
+3. **Tracer Bullet First**
+   When facing uncertainty, build a "tracer bullet"—the minimal technical path that works—first, and run it locally.
+4. **Investigate Before Modifying**
+   Do not write code based on assumptions. Gather facts, separate hypotheses, and decide the next action first.
 
-## 2. Architectural Guardrails
-- **Dependency Rules**: Strictly maintain unidirectional dependencies (`CLI/UI → Domain → Adapters`). No cyclic dependencies.
-- **Minimal Boundaries**: Keep structure simple. Do not split prematurely.
+## Architectural Guardrails
 
-## 3. Drift Classification & Stopping Condition
-Evaluate every change. If it is `NO_CHANGE` or `MINOR_UPDATE`, proceed.
-🚨 **[STOP] CONDITION (`STRUCTURAL_ADJUST`)**: If a change breaks a boundary, dependency rule, or public contract, you must **IMMEDIATELY HALT** implementation. Propose an Architecture Decision Record (ADR) detailing Context, Decision, and Consequences to the user for approval before continuing.
+Architecture is not a "perfect blueprint" but a "minimal set of constraints to prevent excessive drift."
 
-## 4. Safety Restrictions (Requires Human Confirmation)
+- **Preserve Observable Boundaries**: Define and lock the contract (CLI inputs/outputs, exit codes, error classifications) before implementation, and do not break it.
+- **Dependency Direction**: Strictly adhere to unidirectional dependencies: `CLI/UI → Domain → Adapters`.
+- **No Cyclic Dependencies**: Do not create circular references between modules.
+- **Minimal Boundaries**: Keep the structure simple; do not prematurely split into components until the scope demands it.
+
+## Drift Classification
+
+Every change must be evaluated and classified into one of three categories:
+
+| Classification | State | Action |
+|---|---|---|
+| **NO_CHANGE** | Fits completely within existing ADRs, boundaries, contracts, and dependency rules. | Proceed as is. |
+| **MINOR_UPDATE** | Direction is valid, but requires minor documentation updates or code cleanup (e.g., clarifying responsibility comments). | Clean up and proceed. |
+| **STRUCTURAL_ADJUST** | Cannot be explained by existing guardrails. Breaks a boundary, responsibility, or contract. | **[STOP]** Immediately halt the implementation and propose an Architecture Decision Record (ADR) and evolution plan to the human. |
+
+## Safety Restrictions
+
+The following destructive actions are strictly prohibited without explicit human confirmation:
 - Mass file deletion
 - Widespread filesystem rewrites
-- Structural changes to live infrastructure
-
-## 5. Multi-Agent Workflows
-This repository supports custom Claude Code **Sub-agents**, mapping to the Antigravity architecture roles:
-
-- `investigator`: Optimized for read-only fact gathering.
-- `architect`: Evaluates structural boundaries and initiates ADRs if violations occur.
-- `tracer`: Constructs the smallest viable end-to-end path (Tracer Bullet).
-- `tester`: Implements exhaustive GWT tests and CLI Contracts.
-
-### Sub-agents vs. Commands
-- **Commands**: E.g., `/mission` expands a prompt macro into your *current* conversation context. Used to structure your own workflow.
-- **Sub-agents**: These are *isolated, separate Claude sessions* with specialized system prompts, tools, and cost profiles. Used to delegate complete chunks of work to another "persona" (often in the background). 
-
-**Usage Example:**
-> "Please spawn the `investigator` to read through the `src/domain` codebase in the background, and report back the facts without making any code modifications."
+- External side effects (e.g., executing structural changes on live infrastructure)

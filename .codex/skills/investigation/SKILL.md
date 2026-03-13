@@ -5,7 +5,7 @@ description: Methodology for grasping the situation and organizing facts before 
 
 # Investigation Methodology
 
-Before modifying any code, you must strictly follow these steps to organize facts and prevent assumption-based changes.
+Before modifying any code, you must strictly follow these steps to organize facts and prevent assumption-based changes. You must not hallucinate or guess the state of the codebase.
 
 ## 1. Gather Facts
 - Extract only observable "facts" such as logs, error messages, and the current implementation code.

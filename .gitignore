@@ -28,3 +28,6 @@ vendor/
 dist/
 build/
 *.log
+/
+# Agent Reports
+.agent/reports/
