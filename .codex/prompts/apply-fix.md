@@ -4,6 +4,8 @@ description: [Quality Loop] Apply fixes and formalize ADRs after QL review triag
 
 # /apply-fix
 
+Compatibility note: this prompt is a legacy shortcut. The canonical workflow lives in `.codex/AGENTS.md` and the relevant files under `.codex/skills/`.
+
 This command is used AFTER the human has triaged the `.codex/reports/ql-report-latest.md` file (by checking `[x]` on selected items).
 
 ## Agent Execution Steps

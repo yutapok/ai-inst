@@ -5,7 +5,19 @@ description: Procedure for test-first expansion (Examples → Contracts → Inva
 
 # Test-First Expansion Procedure
 
-This is the process of nurturing the "Tracer Bullet" created during the `/mission` phase into robust, production-ready code. You must strictly detail the specifications in the following order:
+This skill stands on its own. Use it after a minimal path already works and the next step is to harden behavior with additional tests and structured refactoring.
+
+This is the process of nurturing an already-working tracer bullet into robust, production-ready code. You must strictly detail the specifications in the following order:
+
+## Start Gate
+
+Before using this skill, verify that one of the following is true:
+
+- A tracer bullet already proves the happy path end-to-end
+- The change is a local, well-understood bug fix on an already-working path
+- The work is primarily test expansion without changing the main execution shape
+
+If none of these are true, do not proceed with broad test-first expansion yet. Return to investigation or tracer-bullet work first.
 
 ## 1. Add Examples
 - First, add test cases demonstrating representative concrete examples of the happy path.
@@ -27,3 +39,5 @@ This is the process of nurturing the "Tracer Bullet" created during the `/missio
 
 ## Caution
 Avoid "haphazard refactoring" aimed solely at passing the tests. Always be conscious of enhancing "maintainability," and perform structured refactoring loops (review-fix) as needed.
+
+At a meaningful checkpoint, hand off to the planner skill so the next action is explicit.

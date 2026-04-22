@@ -4,6 +4,8 @@ description: [Ad-hoc] Investigate code state and fact-gathering without making m
 
 # /investigate
 
+Compatibility note: this prompt is a legacy shortcut. The canonical workflow lives in `.codex/AGENTS.md` and `.codex/skills/investigation/SKILL.md`.
+
 This workflow is used for maintenance, incident response, research, and general QA. Its purpose is to gather facts, map execution paths, and identify root causes without making code changes.
 
 ## 1. Select Investigation Mode

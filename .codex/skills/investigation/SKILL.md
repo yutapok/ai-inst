@@ -5,6 +5,8 @@ description: Methodology for grasping the situation and organizing facts before 
 
 # Investigation Methodology
 
+This skill stands on its own. Use it whenever the task requires fact gathering, debugging, impact analysis, or technical research before changes are made.
+
 Before modifying any code, you must strictly follow these steps to organize facts and prevent assumption-based changes. You must not hallucinate or guess the state of the codebase.
 
 ## 1. Gather Facts
@@ -41,3 +43,4 @@ Depending on the investigation mode, apply these specific techniques:
 - Decide the "next place to look" or "what to try next" in order to clarify the unknowns or prove a hypothesis.
 - For bugs, this usually means creating a failing test.
 - For impact analysis, it means drafting a minimal verification plan.
+- If uncertainty remains around the implementation path, recommend a tracer bullet rather than broad test-first expansion.

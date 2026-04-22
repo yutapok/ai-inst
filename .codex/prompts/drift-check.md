@@ -4,8 +4,12 @@ description: [Phase 3] Perform an architecture drift check against formal ADRs o
 
 # /drift-check (Phase 3: Architectural Governance)
 
-This workflow verifies whether all changes added in `/expand` adhere to the existing architectural guardrails, and triggers necessary documentation updates or structural evolution.
+Compatibility note: this prompt is a legacy shortcut. The canonical workflow lives in `.codex/AGENTS.md` and `.codex/skills/architecture/SKILL.md`.
+
+This workflow verifies whether the current changes adhere to the existing architectural guardrails, and triggers necessary documentation updates or structural evolution.
 **This command must STOP and wait for Human Inspection as soon as the drift classification (and an ADR draft if applicable) is output.**
+
+Use this when drift triggers appear, even if the work did not proceed through a perfectly linear sequence.
 
 ## Agent Execution Steps
 
@@ -30,6 +34,7 @@ This workflow verifies whether all changes added in `/expand` adhere to the exis
 
 4. **Output Report and Stop**
    - Output the artifact to `.codex/reports/drift-report-latest.md` using the format below and **STOP** working.
+   - Include a short planner-style next action recommendation for the user unless the result is `STRUCTURAL_ADJUST`, in which case request human decision directly.
 
 ---
 

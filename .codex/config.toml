@@ -20,3 +20,7 @@ config_file = "agents/tracer.toml"
 [agents.tester]
 description = "Expands test coverage following the Test-First Expansion and writes CLI contracts."
 config_file = "agents/tester.toml"
+
+[agents.planner]
+description = "Suggests the next best action at major workflow checkpoints without requiring the user to think in phases."
+config_file = "agents/planner.toml"

@@ -5,6 +5,8 @@ description: Procedure for defining and automating CLI inputs/outputs, exit code
 
 # Defining and Enforcing the CLI Contract
 
+This skill stands on its own. Use it whenever the task changes observable CLI behavior, even if no prompt or named workflow is involved.
+
 Before finalizing the internal implementation (e.g., class structures or methods), you must strictly define the CLI Contract. This contract serves as the "observable boundary" from the outside and acts as your **automated regression guardrail**.
 
 ## 1. Define the Contract as an Integration Test

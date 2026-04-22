@@ -1,3 +1,5 @@
+name = "architect"
+description = "Evaluates architecture drift and drafts ADR guidance when boundaries are violated."
 model = "gpt-5.3-codex"
 model_reasoning_effort = "high"
 sandbox_mode = "read-only"

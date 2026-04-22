@@ -1,3 +1,5 @@
+name = "tester"
+description = "Expands coverage with contract and behavior tests after the tracer path works."
 model = "gpt-5.3-codex"
 model_reasoning_effort = "high"
 developer_instructions = """

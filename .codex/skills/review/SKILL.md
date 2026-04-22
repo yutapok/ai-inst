@@ -5,7 +5,21 @@ description: Comprehensive review for architecture, security, performance, and t
 
 # Review Procedures
 
-This skill is used to perform a deep, heuristic review of the codebase. Unlike `drift-check` which is rigid and deterministic, this review surfaces potential improvements, architectural trade-offs, and security concerns.
+This skill stands on its own. Use it for broad code review, architecture review, security review, or tech-debt triage, regardless of whether a prompt triggered the work.
+
+This skill is used to perform a deep, heuristic review of the codebase. Unlike a rigid architecture drift check, this review surfaces potential improvements, architectural trade-offs, and security concerns.
+
+## Timing Triggers
+
+Prefer this skill when one or more of the following are true:
+
+- The implementation now spans multiple files or modules
+- A tracer bullet has already been expanded beyond the happy path
+- Security, performance, or maintainability concerns are visible
+- Temporary implied ADR notes exist and need triage
+- The user asks for hardening, confidence, cleanup, or broad quality review
+
+This skill may be inserted between implementation steps. It does not require a fixed phase order.
 
 ## Review Dimensions
 

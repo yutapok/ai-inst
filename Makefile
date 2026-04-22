@@ -1,4 +1,4 @@
-.PHONY: install install-claude install-codex install-home-claude install-home-codex help
+.PHONY: install install-claude install-codex install-home-claude install-home-codex install-home-codex-minimal help test
 
 help:
 	@echo "Agentic Architecture Pattern - Antigravity Configurations"
@@ -8,10 +8,14 @@ help:
 	@echo "  make install-claude       DEST=/path/to/project  - Installs Claude Code (.claude) configs"
 	@echo "  make install-home-claude                         - Installs Claude Code configs to Home (~/.claude/)"
 	@echo "  make install-codex        DEST=/path/to/project  - Installs Codex (.codex) configs"
-	@echo "  make install-home-codex                          - Installs Codex configs to Home (~/.codex/)"
+	@echo "  make install-home-codex                          - Installs Codex configs to Home (~/.codex/) with prompts for compatibility"
+	@echo "  make install-home-codex-minimal                  - Installs Codex configs to Home (~/.codex/) without prompts"
 	@echo ""
 	@echo "Example:"
 	@echo "  make install-home-claude"
+
+test:
+	@python3 -m unittest discover -s tests/integration -v
 
 install:
 	@if [ -z "$(DEST)" ]; then \
@@ -71,8 +75,17 @@ install-codex:
 
 install-home-codex:
 	@echo "Installing Codex configs to $(HOME)/.codex/..."
-	@mkdir -p "$(HOME)/.codex/prompts" "$(HOME)/.codex/skills"
+	@mkdir -p "$(HOME)/.codex/prompts" "$(HOME)/.codex/skills" "$(HOME)/.codex/agents"
 	@cp -f .codex/AGENTS.md "$(HOME)/.codex/"
 	@cp -Rf .codex/prompts/ "$(HOME)/.codex/prompts/"
 	@cp -Rf .codex/skills/ "$(HOME)/.codex/skills/"
-	@echo "Home installation complete. Codex is now globally configured with Antigravity."
+	@cp -Rf .codex/agents/ "$(HOME)/.codex/agents/"
+	@echo "Home installation complete. Codex is now globally configured with Antigravity (AGENTS.md + skills + agents, plus prompts for compatibility)."
+
+install-home-codex-minimal:
+	@echo "Installing minimal Codex configs to $(HOME)/.codex/..."
+	@mkdir -p "$(HOME)/.codex/skills" "$(HOME)/.codex/agents"
+	@cp -f .codex/AGENTS.md "$(HOME)/.codex/"
+	@cp -Rf .codex/skills/ "$(HOME)/.codex/skills/"
+	@cp -Rf .codex/agents/ "$(HOME)/.codex/agents/"
+	@echo "Minimal home installation complete. Codex is now globally configured with Antigravity (AGENTS.md + skills + agents)."

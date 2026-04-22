@@ -1,3 +1,5 @@
+name = "investigator"
+description = "Investigates the codebase, extracting facts and unknowns before any modification."
 model = "gpt-5.3-codex"
 model_reasoning_effort = "low"
 sandbox_mode = "read-only"

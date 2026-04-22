@@ -7,6 +7,18 @@ description: Criteria for drift classification, ADR creation, and architecture e
 
 As an autonomous agent, you must evaluate whether your code changes fit within the existing architectural guardrails of the project, and safely evolve the architecture only when necessary.
 
+## Timing Triggers
+
+Prefer this skill when one or more of the following are true:
+
+- Dependency direction may have changed
+- Responsibilities moved across boundaries
+- Public contracts changed
+- New technology choices were introduced
+- New wiring crosses architectural boundaries
+
+This skill may be inserted at any point once architectural risk is visible; it does not require a strictly linear workflow.
+
 ## 1. Drift Verification
 Evaluate the implementation across these 5 vectors to ensure no deviation has occurred.
 
@@ -36,10 +48,10 @@ Triggers that permit evolution include:
 - Unavoidable technology decision changes
 
 ## 4. Implied ADRs (Temporary Records)
-During phases of high uncertainty (e.g., Tracer Bullet development), architectural decisions may be made rapidly. To ensure these decisions are not lost:
+During phases of high uncertainty (for example, tracer-bullet development), architectural decisions may be made rapidly. To ensure these decisions are not lost:
 - **Record**: Create a temporary note in `.codex/reports/tmp/implied-adr/implied-adr-[Topic]-[Date].md` (keep volatile).
 - **Content**: Briefly record the context, the chosen path, and any immediate trade-offs observed.
-- **Transition**: These notes are *not* formal architecture. They must be reviewed and either formalized into an ADR or discarded during the `/ql-review` phase once the implementation is validated.
+- **Transition**: These notes are *not* formal architecture. They must be reviewed and either formalized into an ADR or discarded during the later review phase once the implementation is validated.
 
 ## 5. ADR Creation Rules (Formal Records)
 An ADR must be structured as follows:

@@ -4,7 +4,9 @@ description: [Phase 1] Investigate state, fix contracts, and create a tracer bul
 
 # /mission (Phase 1: Prove Viability)
 
-This workflow is used to determine the direction of a new task and create the smallest technically viable code (tracer bullet).
+Compatibility note: this prompt is a legacy shortcut. The canonical workflow lives in `.codex/AGENTS.md` and the relevant files under `.codex/skills/`.
+
+This workflow is used to determine the direction of a new task and create the smallest technically viable code (tracer bullet). Use it when the adaptive policy says a tracer should come before broader test-first work.
 **This command must STOP and wait for Human Inspection as soon as the tracer bullet behavior is verified.**
 
 ## Non-Functional Requirements (NFRs) Baseline
@@ -32,6 +34,7 @@ All implementations in this phase must adhere to the following standards:
 
 4. **Output Plan and Stop**
    - Output the artifact using the `mission.md` format below and **STOP** working.
+   - Include a short planner-style `次のステップ:` recommendation for the user, using numbered options with workflow states and marking `1.` as `（推奨）`.
 
 ---
 

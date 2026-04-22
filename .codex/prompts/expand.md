@@ -4,7 +4,9 @@ description: [Phase 2] Expand the tracer bullet using Test-First principles, rev
 
 # /expand (Phase 2: Flesh Out Implementation)
 
-This workflow expands the "minimal working code (tracer bullet)" created in `/mission` into production-ready code by handling coverage, edge cases, and refactoring.
+Compatibility note: this prompt is a legacy shortcut. The canonical workflow lives in `.codex/AGENTS.md` and the relevant files under `.codex/skills/`.
+
+This workflow expands an already-working path into production-ready code by handling coverage, edge cases, and refactoring. Use it only when the adaptive policy says tracer-first work is no longer needed.
 **This command must STOP and wait for Human Inspection as soon as the test-first expansion and self-review fixes are complete.**
 
 ## Agent Execution Steps
@@ -25,6 +27,7 @@ This workflow expands the "minimal working code (tracer bullet)" created in `/mi
 
 3. **Output Expansion Results and Stop**
    - Output the artifact using the `expand_result.md` format below and **STOP** working.
+   - Include a short planner-style `次のステップ:` recommendation for the user, using numbered options with workflow states and marking `1.` as `（推奨）`.
 
 ---
 

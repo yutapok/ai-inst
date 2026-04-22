@@ -10,7 +10,7 @@ We provide tailored instructions and skill definitions for various AI agent plat
 
 - **`.agent`**: The generic / platform-independent rules and skills. Compatible with **Antigravity** and other CLI-based agent frameworks.
 - **`.claude`**: Optimized for **Claude Code**. Leverages Claude's custom slash commands (e.g., `/mission`, `/expand`) and Markdown-based skill framework.
-- **`.codex`**: Optimized for **OpenAI Codex** (and similar IDE-based agents like Cursor/Copilot). Utilizes `AGENTS.md` to define project-level instructions and a dedicated skills directory.
+- **`.codex`**: Optimized for **OpenAI Codex** (and similar IDE-based agents like Cursor/Copilot). Uses `AGENTS.md` as the canonical policy layer, `skills/` as reusable workflows, and optional `agents/` presets for focused roles including next-step planning. `prompts/` is retained only as a compatibility layer.
 
 ## Core Concepts
 
@@ -38,10 +38,57 @@ make install-claude DEST=/path/to/your/project
 
 # Install Codex (.codex) configs
 make install-codex DEST=/path/to/your/project
+
+# Install Codex config to ~/.codex with compatibility prompts
+make install-home-codex
+
+# Install Codex config to ~/.codex without prompts
+make install-home-codex-minimal
 ```
 
 ## Structure
 
 - **`rules.md` / `CLAUDE.md` / `AGENTS.md`**: The primary entrypoints and guardrail definitions.
-- **`skills/`**: Specific playbooks detailing how the agent should handle architecture governance, investigation, tracer bullets, CLI contracts, and test-first expansion.
+- **`skills/`**: Specific playbooks detailing how the agent should handle architecture governance, investigation, tracer bullets, CLI contracts, test-first expansion, review timing, and next-step planning.
+- **`agents/`**: Optional Codex role presets that bind a responsibility to one or more skills.
 - **`commands/` / `workflows/`**: (Platform-specific) The predefined workflows for the agents to follow during the development cycle (e.g., `/mission` and `/expand`).
+- **`prompts/`**: Codex compatibility shortcuts retained for legacy workflows, but not the canonical source of behavior.
+
+## Codex Usage Model
+
+For Codex, prefer the following order of authority:
+
+1. **`AGENTS.md`** for persistent repo policy and task-routing guidance
+2. **`skills/`** for reusable execution playbooks
+3. **`agents/`** for focused presets such as investigator, tracer, tester, planner, and architect
+4. **`prompts/`** only as optional shortcuts for legacy workflows
+
+This matters because recent Codex versions may not reliably surface custom prompts from `~/.codex/prompts`, while `AGENTS.md` and installed skills remain the stable path.
+
+Recommended skill routing for Codex:
+
+- Investigation, debugging, impact analysis, and research -> `investigation`
+- Observable CLI definition and regression guardrails -> `cli-contract`
+- Minimal viable end-to-end path -> `tracer-bullet`
+- Coverage expansion and invariant protection -> `test-first`
+- Next-step recommendation at major checkpoints -> `planner`
+- Architecture drift checks and ADR decisions -> `architecture`
+- Broad review and triage -> `review`
+
+`make install-home-codex` installs `AGENTS.md + skills + agents` and also keeps `prompts/` for backward compatibility.
+
+`make install-home-codex-minimal` installs only the supported long-term path: `AGENTS.md + skills + agents`.
+
+## Verification
+
+Run the repository integration checks with:
+
+```bash
+make test
+```
+
+These checks verify the distributed Codex configuration still:
+
+- installs the required `AGENTS.md`, skills, prompts, and agent presets
+- preserves the CLI-contract requirement for automated integration tests
+- preserves the planner output contract built around `次のステップ:` and explicit workflow states

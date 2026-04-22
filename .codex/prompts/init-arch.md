@@ -4,6 +4,8 @@ description: [Phase 0] Scan project structure and initialize architectural conte
 
 # /init-arch (Phase 0: Architectural Discovery)
 
+Compatibility note: this prompt is a legacy shortcut. The canonical workflow lives in `.codex/AGENTS.md` and `.codex/skills/architecture/SKILL.md`.
+
 This workflow scans the current project structure to discover implicit architectural patterns and initialize the governance framework (`rules.md` and a baseline ADR).
 
 ## Agent Execution Steps

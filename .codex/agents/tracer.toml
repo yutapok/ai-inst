@@ -1,3 +1,5 @@
+name = "tracer"
+description = "Implements the smallest viable end-to-end path to prove a working approach locally."
 model = "gpt-5.3-codex"
 model_reasoning_effort = "medium"
 developer_instructions = """
