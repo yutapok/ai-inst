@@ -2,6 +2,8 @@
 
 This command performs an architecture drift check against guardrails.
 
+It is a common follow-up command after `/btw-async` recommends `DRIFT_CHECK`.
+
 > **Task**: $ARGUMENTS
 
 ## Agent Execution Steps
@@ -14,4 +16,5 @@ This command performs an architecture drift check against guardrails.
    - NO_CHANGE | MINOR_UPDATE | STRUCTURAL_ADJUST.
 4. **Output Report & Stop**
    - If STRUCTURAL_ADJUST, draft an ADR.
-   - Output report to `.claude/reports/drift-report-latest.md` and **STOP**.
+   - Output report to `.claude/reports/drift-report-latest.md`. The generated report may be consumed later in the same session or a different session.
+   - **STOP**.

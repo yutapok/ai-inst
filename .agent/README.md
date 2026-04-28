@@ -39,6 +39,24 @@ The commands in this repository are explicitly designed around **Human Inspectio
 - If a structural adjust is needed, it drafts an Architecture Decision Record (ADR).
 - **[STOP]** Waits for human inspection and approval of the drift classification or evolution proposal.
 
+### Checkpoint Recommendation Format
+
+When you distribute these workflows or summarize the next move for downstream users, keep the recommendation format aligned with the Claude/Codex variants:
+
+- Use a numbered `次のステップ:` section.
+- Mark only `1.` as recommended with `（推奨）`.
+- If a follow-up can be handled independently in parallel, prefix that action with `（Async）`.
+- Keep the workflow state token explicit so the reader can tell whether the next move is `INVESTIGATE`, `TRACER`, `EXPAND`, `REVIEW`, or `DRIFT_CHECK`.
+
+Canonical example:
+
+```markdown
+次のステップ:
+1. （推奨）TRACER: build the smallest runnable path
+2. REVIEW: （Async）inspect maintainability and risk
+3. DRIFT_CHECK: confirm the architecture still fits current guardrails
+```
+
 ---
 
 ## Technical Stack & Compatibility
@@ -76,6 +94,7 @@ your-project/
 │       ├── cli-contract/SKILL.md
 │       ├── tracer-bullet/SKILL.md
 │       ├── test-first/SKILL.md
+│       ├── dead-code-cleanup/SKILL.md
 │       └── architecture/SKILL.md
 └── (your project files...)
 ```
@@ -87,3 +106,5 @@ You can now start development by using the slash commands in the chat:
 - `/mission Create a new login feature`
 - `/expand`
 - `/drift-check`
+
+Use the `dead-code-cleanup` skill after larger changes when the code works but now contains unused helpers, duplicate logic, or abstractions that no longer earn their keep.

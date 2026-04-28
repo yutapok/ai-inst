@@ -16,5 +16,9 @@ A tracer bullet is a technique to build the "smallest technically viable path" b
 - **Do Not Prematurely Abstract or Split**: Avoid over-designing class hierarchies, extracting interfaces, or rigidly organizing directories until *after* the tracer bullet proves successful.
 - **Do Not Exhaustively Handle Edge Cases**: Full coverage of validation and abnormal behavior handling should be deferred to the subsequent `/expand` (Test-First Expansion) phase.
 
+## Completion Gate
+- Do not treat the tracer bullet as ready for `/expand` if the task changed a public contract and the required `Contract Review:` block still has any unresolved line.
+- If the happy path works but contract provocation still reveals a concern, return to `CONTRACT_LOCK` or escalate to `HUMAN_DECISION` before broader expansion.
+
 ## Why are Tracer Bullets Necessary?
 They prevent "Speculative Architecture" driven by guesswork, and they provide momentum by quickly delivering a working piece of software locally.

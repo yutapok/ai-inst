@@ -29,6 +29,9 @@ dist/
 build/
 *.log
 /
+__pycache__/
+
+
 # Agent Reports
 .agent/reports/
 .codex/reports/

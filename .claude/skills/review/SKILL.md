@@ -5,6 +5,8 @@ description: Comprehensive review for architecture, security, performance, and t
 
 # Review Procedures
 
+This skill may be activated directly or via `/btw-async` when a broad asynchronous inspection is the next best move.
+
 This skill is used to perform a deep, heuristic review of the codebase. Unlike `drift-check` which is rigid and deterministic, this review surfaces potential improvements, architectural trade-offs, and security concerns.
 
 ## Review Dimensions

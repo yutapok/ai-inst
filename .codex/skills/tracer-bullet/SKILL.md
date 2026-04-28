@@ -29,6 +29,7 @@ Treat the tracer bullet as complete when all of the following are true:
 - A single happy path works end-to-end
 - The key observable behavior is verified locally
 - The implementation proves viability without requiring full generalization
+- If the task changes a public contract, the required `Contract Review:` block has been shown and no review line remains unresolved
 
 The tracer bullet is not responsible for:
 
@@ -36,6 +37,8 @@ The tracer bullet is not responsible for:
 - Invariant protection across the whole system
 - Broad refactoring for maintainability
 - Exhaustive error handling
+
+If the tracer bullet works but the public contract still has unresolved provocation concerns, return to `CONTRACT_LOCK` instead of proceeding to `EXPAND`.
 
 After the tracer bullet is proven, use the planner skill to suggest the next best action.
 

@@ -7,6 +7,11 @@ description: Procedure for test-first expansion (Examples → Contracts → Inva
 
 This is the process of nurturing the "Tracer Bullet" created during the `/mission` phase into robust, production-ready code. You must strictly detail the specifications in the following order:
 
+## Start Gate
+- Before using this skill, confirm the happy path already works end-to-end or the change is a local fix on an already-working path.
+- If the task changes a public contract, confirm the required `Contract Review:` block has already been shown and every line is resolved or explicitly approved by the human.
+- If those conditions are not true, go back to investigation, contract lock, or tracer work first.
+
 ## 1. Add Examples
 - First, add test cases demonstrating representative concrete examples of the happy path.
 - This ensures the code continuously meets the basic functional requirements.

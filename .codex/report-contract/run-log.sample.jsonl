@@ -1,0 +1,1 @@
+{"facts":{"timestamp":"2026-04-24T10:00:00Z","task_id":"sample-task-001","task":"Investigate Codex core install tiers","skills":["investigation"],"agents_used":[],"outcome":"completed"},"inferences":{"risk_summary":"Low risk because the change is documentation-only.","why_now":"Need a stable Codex core that does not depend on agent presets."}}

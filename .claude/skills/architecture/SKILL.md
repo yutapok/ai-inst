@@ -7,6 +7,8 @@ description: Criteria for drift classification, ADR creation, and architecture e
 
 As an AI agent, you must evaluate whether your code changes fit within the existing architectural guardrails of the project, and safely evolve the architecture only when necessary.
 
+This skill may be activated directly or via `/btw-async` when a focused architectural drift inspection is the next best move.
+
 ## 1. Drift Verification
 Evaluate the implementation across these 5 vectors to ensure no deviation has occurred.
 

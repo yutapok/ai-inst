@@ -16,6 +16,7 @@ Before using this skill, verify that one of the following is true:
 - A tracer bullet already proves the happy path end-to-end
 - The change is a local, well-understood bug fix on an already-working path
 - The work is primarily test expansion without changing the main execution shape
+- If the task changes a public contract, the `Contract Review:` block has already been shown and every line is resolved or explicitly approved by the human
 
 If none of these are true, do not proceed with broad test-first expansion yet. Return to investigation or tracer-bullet work first.
 
