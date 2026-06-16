@@ -103,8 +103,6 @@ class CodexContractIntegrationTests(unittest.TestCase):
         print(".codex/skills/planner/SKILL.md")
         print(".codex/skills/dead-code-cleanup/SKILL.md")
         print(".codex/report-contract/README.md")
-        print(".codex/prompts/mission.md")
-        print(".codex/prompts/expand.md")
         print(".codex/agents/*.toml")
         with tempfile.TemporaryDirectory() as tmpdir:
             dest = Path(tmpdir) / "dest"
@@ -182,7 +180,6 @@ class CodexContractIntegrationTests(unittest.TestCase):
 
     def test_install_home_codex_variants_copy_expected_files(self) -> None:
         print("=== CLI Contract Encompassed Packages ===")
-        print(".codex/prompts")
         print(".codex/skills")
         print(".codex/agents")
         print(".codex/report-contract")
@@ -210,23 +207,20 @@ class CodexContractIntegrationTests(unittest.TestCase):
 
             stale = Path(tmp_home) / ".codex"
             (stale / "agents").mkdir(parents=True)
-            (stale / "prompts").mkdir(parents=True)
             (stale / "agents" / "obsolete.txt").write_text("old")
-            (stale / "prompts" / "obsolete.txt").write_text("old")
             proc = self.run_cmd("make", "install-home-codex", env=env)
             self.assertIn("Home installation complete. Codex is now globally configured", proc.stdout)
 
             home_codex = Path(tmp_home) / ".codex"
             self.assertTrue((home_codex / "AGENTS.md").exists())
             self.assertTrue((home_codex / "config.toml").exists())
-            self.assertTrue((home_codex / "prompts" / "mission.md").exists())
             self.assertTrue((home_codex / "skills" / "cli-contract" / "SKILL.md").exists())
             self.assertTrue((home_codex / "skills" / "dead-code-cleanup" / "SKILL.md").exists())
             self.assertTrue((home_codex / "report-contract" / "run-log.sample.jsonl").exists())
             self.assertTrue((home_codex / "reports").exists())
             self.assertTrue((home_codex / "agents" / "tester.toml").exists())
             self.assertFalse((home_codex / "agents" / "obsolete.txt").exists())
-            self.assertFalse((home_codex / "prompts" / "obsolete.txt").exists())
+            self.assertFalse((home_codex / "prompts").exists())
 
         with tempfile.TemporaryDirectory() as tmp_home:
             env = os.environ.copy()
@@ -234,9 +228,7 @@ class CodexContractIntegrationTests(unittest.TestCase):
 
             stale = Path(tmp_home) / ".codex"
             (stale / "agents").mkdir(parents=True)
-            (stale / "prompts").mkdir(parents=True)
             (stale / "agents" / "obsolete.txt").write_text("old")
-            (stale / "prompts" / "obsolete.txt").write_text("old")
             proc = self.run_cmd("make", "install-home-codex-minimal", env=env)
             self.assertIn("Minimal home installation complete. Codex is now globally configured", proc.stdout)
 

@@ -61,7 +61,7 @@ When a command, test, or build fails, the agent must not immediately halt or pro
 ### 2. Infinite Loop & Stalling Prevention
 To prevent resource waste and infinite looping:
 - If the self-correction loop fails to resolve the issue after **3 attempts** (or if the implementation results in the same recurring error), the agent must halt autonomous execution.
-- Route the task to `HUMAN_DECISION` and present a structured summary using the following **Escalation Summary Format**:
+- Route the task to `HUMAN_DECISION` and present a structured summary using the following **Escalation Summary Format** (ensure all API keys, credentials, and private paths are sanitized/masked before presenting):
   ```markdown
   ### Loop Halt: [Short reason for stall]
   - **Goal**: [What the loop was trying to achieve]

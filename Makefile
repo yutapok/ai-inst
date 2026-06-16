@@ -80,10 +80,9 @@ install-codex:
 	fi; \
 	echo "Installing .codex to $$DEST_ABS..."; \
 	rm -rf "$$DEST_ABS/.codex"; \
-	mkdir -p "$$DEST_ABS/.codex/prompts" "$$DEST_ABS/.codex/skills" "$$DEST_ABS/.codex/agents" "$$DEST_ABS/.codex/report-contract" "$$DEST_ABS/.codex/reports"; \
+	mkdir -p "$$DEST_ABS/.codex/skills" "$$DEST_ABS/.codex/agents" "$$DEST_ABS/.codex/report-contract" "$$DEST_ABS/.codex/reports"; \
 	cp -f .codex/AGENTS.md "$$DEST_ABS/.codex/"; \
 	cp -f .codex/config.toml "$$DEST_ABS/.codex/"; \
-	cp -Rf .codex/prompts/ "$$DEST_ABS/.codex/prompts/"; \
 	cp -Rf .codex/skills/ "$$DEST_ABS/.codex/skills/"; \
 	cp -Rf .codex/agents/ "$$DEST_ABS/.codex/agents/"; \
 	cp -Rf .codex/report-contract/ "$$DEST_ABS/.codex/report-contract/"; \
@@ -92,7 +91,7 @@ install-codex:
 install-home-codex-core:
 	@echo "Installing Codex core configs to $(HOME)/.codex/..."
 	@rm -f "$(HOME)/.codex/AGENTS.md" "$(HOME)/.codex/config.toml"
-	@rm -rf "$(HOME)/.codex/skills" "$(HOME)/.codex/agents" "$(HOME)/.codex/prompts" "$(HOME)/.codex/report-contract" "$(HOME)/.codex/reports"
+	@rm -rf "$(HOME)/.codex/skills" "$(HOME)/.codex/agents" "$(HOME)/.codex/report-contract" "$(HOME)/.codex/reports"
 	@mkdir -p "$(HOME)/.codex/skills" "$(HOME)/.codex/report-contract" "$(HOME)/.codex/reports"
 	@cp -f .codex/AGENTS.md "$(HOME)/.codex/"
 	@cp -Rf .codex/skills/ "$(HOME)/.codex/skills/"
@@ -102,20 +101,19 @@ install-home-codex-core:
 install-home-codex:
 	@echo "Installing Codex configs to $(HOME)/.codex/..."
 	@rm -f "$(HOME)/.codex/AGENTS.md" "$(HOME)/.codex/config.toml"
-	@rm -rf "$(HOME)/.codex/skills" "$(HOME)/.codex/agents" "$(HOME)/.codex/prompts" "$(HOME)/.codex/report-contract" "$(HOME)/.codex/reports"
-	@mkdir -p "$(HOME)/.codex/prompts" "$(HOME)/.codex/skills" "$(HOME)/.codex/agents" "$(HOME)/.codex/report-contract" "$(HOME)/.codex/reports"
+	@rm -rf "$(HOME)/.codex/skills" "$(HOME)/.codex/agents" "$(HOME)/.codex/report-contract" "$(HOME)/.codex/reports"
+	@mkdir -p "$(HOME)/.codex/skills" "$(HOME)/.codex/agents" "$(HOME)/.codex/report-contract" "$(HOME)/.codex/reports"
 	@cp -f .codex/AGENTS.md "$(HOME)/.codex/"
 	@cp -f .codex/config.toml "$(HOME)/.codex/"
-	@cp -Rf .codex/prompts/ "$(HOME)/.codex/prompts/"
 	@cp -Rf .codex/skills/ "$(HOME)/.codex/skills/"
 	@cp -Rf .codex/agents/ "$(HOME)/.codex/agents/"
 	@cp -Rf .codex/report-contract/ "$(HOME)/.codex/report-contract/"
-	@echo "Home installation complete. Codex is now globally configured with Antigravity (AGENTS.md + skills + agents + report-contract, plus prompts for compatibility)."
+	@echo "Home installation complete. Codex is now globally configured with Antigravity (AGENTS.md + skills + agents + report-contract)."
 
 install-home-codex-minimal:
 	@echo "Installing minimal Codex configs to $(HOME)/.codex/..."
 	@rm -f "$(HOME)/.codex/AGENTS.md" "$(HOME)/.codex/config.toml"
-	@rm -rf "$(HOME)/.codex/skills" "$(HOME)/.codex/agents" "$(HOME)/.codex/prompts" "$(HOME)/.codex/report-contract" "$(HOME)/.codex/reports"
+	@rm -rf "$(HOME)/.codex/skills" "$(HOME)/.codex/agents" "$(HOME)/.codex/report-contract" "$(HOME)/.codex/reports"
 	@mkdir -p "$(HOME)/.codex/skills" "$(HOME)/.codex/agents" "$(HOME)/.codex/report-contract" "$(HOME)/.codex/reports"
 	@cp -f .codex/AGENTS.md "$(HOME)/.codex/"
 	@cp -f .codex/config.toml "$(HOME)/.codex/"

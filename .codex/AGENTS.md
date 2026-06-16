@@ -34,10 +34,6 @@ For Codex, the canonical workflow source is:
    The tracked contract and samples for workflow records, defining what may be written locally without committing runtime logs.
 4. **`agents/`**
    Optional role presets that bind a focused responsibility to one or more skills.
-5. **`prompts/`**
-   Compatibility shortcuts only. Prompts may remain available for legacy workflows, but they are not the source of truth.
-
-When Codex has both a prompt and a skill available for the same workflow, it must follow the skill and this `AGENTS.md` first, and treat the prompt as a convenience entrypoint.
 
 ## Codex Distribution Tiers
 
@@ -52,7 +48,6 @@ This core intentionally avoids model pins, multi-agent runtime settings, and pro
 Additional optional layers are:
 
 - **`agents/`** for role presets and tool-specific execution hints
-- **`prompts/`** for legacy compatibility only
 
 ## Skill Routing
 
@@ -150,42 +145,8 @@ If the likely result is `STRUCTURAL_ADJUST`, stop autonomous evolution and move 
 
 ### Next Action Contract
 
-At major checkpoints, Codex must provide a short next-step recommendation using the planner skill. This is an `AGENTS.md` / planner output contract, not a Codex CLI Plan mode feature. Major checkpoints include:
-
-- End of the current turn
-- After a tracer bullet is proven
-- After a meaningful expansion milestone
-- When review or drift triggers are observed
-- Before waiting for a human decision
-- In the final response after implementation or investigation work completes for the current turn
-
-The planner output must use a numbered `次のステップ:` section and keep it concise.
-
-- Each step must include exactly one workflow state token.
-- Execution markers are optional and limited to `(Recommended)` and `<ASYNC>`.
-- Step `1.` is required and is the only recommended option; it must be labeled `(Recommended)`.
-- When the recommendation assumes repo code changes, add a short `Verify:` line under step `1.` with a local build, test, or command for the user.
-- Keep `Verify:` to one command and one observation point so the user can run it without choosing among alternatives.
-- Use `<ASYNC>` only for independently parallelizable sidecar options that do not block the recommended path.
-- Omit any execution marker for synchronous follow-up options.
-- Attempt to split recommendations into independently parallelizable instructions when feasible, but keep the critical path in the recommended option.
-- Offer at most 3 options.
-- Workflow state tokens must remain exactly: `INVESTIGATE`, `CONTRACT_LOCK`, `TRACER`, `EXPAND`, `REVIEW`, `DRIFT_CHECK`, `HUMAN_DECISION`.
-- Add a short `Current Read:` line before `次のステップ:` only when the surrounding context is not already obvious.
-- When a task changes a public contract and reaches a major checkpoint, include a short `Contract Review:` block covering success-condition error, boundary error, and omission error before recommending `EXPAND`.
-- If any line in that review is unresolved, do not recommend `EXPAND`; recommend `CONTRACT_LOCK` or `HUMAN_DECISION` instead.
-
-The canonical format is:
-
-```markdown
-Current Read: [short status if needed]
-
-次のステップ:
-1. (Recommended) [WORKFLOW_STATE]: [short action]
-   Verify: [one command + one observation point]
-2. <ASYNC> [WORKFLOW_STATE]: [short action]
-3. [WORKFLOW_STATE]: [short action]
-```
+At major checkpoints, Codex must delegate output generation to the **Workflow Planner skill** (`.agent/skills/planner/SKILL.md`).
+- Adhere strictly to the `次のステップ:` output contract, options mapping, and `Verify:` specifications detailed in the planner skill.
 
 ## Record-Only Observability
 
@@ -241,7 +202,7 @@ When a command, test, or build fails, the agent must not immediately halt or pro
 ### 2. Infinite Loop & Stalling Prevention
 To prevent resource waste and infinite looping:
 - If the self-correction loop fails to resolve the issue after **3 attempts** (or if the implementation results in the same recurring error), the agent must halt autonomous execution.
-- Route the task to `HUMAN_DECISION` and present a structured summary using the following **Escalation Summary Format**:
+- Route the task to `HUMAN_DECISION` and present a structured summary using the following **Escalation Summary Format** (ensure all API keys, credentials, and private paths are sanitized/masked before presenting):
   ```markdown
   ### Loop Halt: [Short reason for stall]
   - **Goal**: [What the loop was trying to achieve]

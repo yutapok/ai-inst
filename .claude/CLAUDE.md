@@ -42,31 +42,9 @@ When the task introduces or changes a public CLI or API contract, Claude Code mu
 
 ## Next Action Contract
 
-When `/btw-async` is used, Claude Code must return a short next-step recommendation using the following format:
-
-- Add `Current Read:` only when the status is not already obvious.
-- Then emit a numbered `次のステップ:` section.
-- Step `1.` is the only recommended option and must be labeled `（推奨）`.
-- When the recommendation assumes repo code changes, add a short `Verify:` line under step `1.` with a local build, test, or command for the user.
-- Keep `Verify:` to one command and one observation point so the user can run it without choosing among alternatives.
-- If a step can be issued independently in parallel, prefix that action with `（Async）`.
-- Attempt to split recommendations into independently parallelizable instructions when feasible.
-- Offer at most 3 options.
-- Each option must contain exactly one workflow state token.
-- When the task changes a public contract and reaches a major checkpoint, include a short `Contract Review:` block covering success-condition error, boundary error, and omission error before recommending `EXPAND`.
-- If any review line is unresolved, do not recommend `EXPAND`; recommend `CONTRACT_LOCK` or `HUMAN_DECISION` instead.
-
-The canonical format is:
-
-```markdown
-Current Read: [short status if needed]
-
-次のステップ:
-1. （推奨）[WORKFLOW_STATE]: [short action]
-   Verify: [one command + one observation point]
-2. [WORKFLOW_STATE]: （Async）[short action]
-3. [WORKFLOW_STATE]: [short action]
-```
+When next-step recommendations or `/btw-async` are requested, the agent must delegate output generation to the **Workflow Planner skill** (`.agent/skills/planner/SKILL.md`).
+- Follow the rules, contract structures, and verification templates defined in the planner skill.
+- Maintain a clean, concise `次のステップ:` block (up to 3 options) with exactly one workflow state token per option.
 
 ## Architectural Guardrails
 
@@ -126,7 +104,7 @@ When a command, test, or build fails, the agent must not immediately halt or pro
 ### 2. Infinite Loop & Stalling Prevention
 To prevent resource waste and infinite looping:
 - If the self-correction loop fails to resolve the issue after **3 attempts** (or if the implementation results in the same recurring error), the agent must halt autonomous execution.
-- Route the task to `HUMAN_DECISION` and present a structured summary using the following **Escalation Summary Format**:
+- Route the task to `HUMAN_DECISION` and present a structured summary using the following **Escalation Summary Format** (ensure all API keys, credentials, and private paths are sanitized/masked before presenting):
   ```markdown
   ### Loop Halt: [Short reason for stall]
   - **Goal**: [What the loop was trying to achieve]
