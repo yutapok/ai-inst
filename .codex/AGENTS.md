@@ -11,6 +11,17 @@
 4. **Investigate Before Modifying**
    Do not write code based on assumptions. Gather facts, separate hypotheses, and decide the next action first.
 
+## Role-Specific Guidance: Codex
+
+Codex excels in **detailed implementation, rigorous logic verification, test-first expansion, and post-implementation cleanups**. However, to prevent local optimization and context loss, Codex must adhere to the following role-specific constraints:
+
+- **Maximize Strengths (Precision & Implementation)**:
+  - Lead execution during the `TRACER` (Tracer Bullet) and `EXPAND` (Test-First Expansion) states.
+  - Drive code optimization, test coverage hardening, and dead-code removal (`dead-code-cleanup`).
+- **Mitigate Weaknesses (Context Loss & Boundary Drift)**:
+  - Before writing code, always perform an `INVESTIGATE` step to verify project-wide boundaries and dependency directions.
+  - Never breach established CLI/API contracts. If a local change risks causing architectural drift (`STRUCTURAL_ADJUST`), immediately halt and escalate to `HUMAN_DECISION`.
+
 ## Codex Workflow Sources
 
 For Codex, the canonical workflow source is:
@@ -216,3 +227,27 @@ The following destructive actions are strictly prohibited without explicit human
 - Mass file deletion
 - Widespread filesystem rewrites
 - External side effects (e.g., executing structural changes on live infrastructure)
+
+## Loop Governance & Self-Correction
+
+To practice robust Loop Engineering and ensure reliable autonomous execution, the agent must adhere to the following execution loop rules:
+
+### 1. Autonomous Retry Loop
+When a command, test, or build fails, the agent must not immediately halt or prompt the user for help. Instead, it must autonomously initiate a self-correction loop:
+1. **Analyze**: Inspect the error logs, trace output, and recent code changes.
+2. **Hypothesize**: Formulate a clear hypothesis about the root cause of the failure.
+3. **Execute & Verify**: Implement the corrected logic and re-run the verification command.
+
+### 2. Infinite Loop & Stalling Prevention
+To prevent resource waste and infinite looping:
+- If the self-correction loop fails to resolve the issue after **3 attempts** (or if the implementation results in the same recurring error), the agent must halt autonomous execution.
+- Route the task to `HUMAN_DECISION` and present a structured summary using the following **Escalation Summary Format**:
+  ```markdown
+  ### Loop Halt: [Short reason for stall]
+  - **Goal**: [What the loop was trying to achieve]
+  - **Failed Attempts**: [Brief list of what was tried and failed (e.g., Command X failed with Error Y)]
+  - **Tested Hypotheses**: [What hypotheses were disproven]
+  - **Proposed Options**:
+    1. [Option A - recommended adjustment]
+    2. [Option B - alternative]
+  ```
