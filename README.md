@@ -8,7 +8,8 @@ Rather than letting AI agents guess implementation details or make speculative a
 
 We provide tailored instructions and skill definitions for various AI agent platforms:
 
-- **`.agent`**: The generic / platform-independent rules and skills. Compatible with **Antigravity** and other CLI-based agent frameworks.
+- **`.agent`**: The generic / platform-independent rules and skills. Compatible with other CLI-based agent frameworks.
+- **`.antigravity`**: Optimized for **Google Antigravity**. Restructures rules (`ANTIGRAVITY.md`), workflows (slash commands like `/mission`, `/expand`, `/drift-check`), and skills (such as `planner` and `dead-code-cleanup`) to serve as first-class primitives.
 - **`.claude`**: Optimized for **Claude Code**. Leverages Claude's custom slash commands (e.g., `/mission`, `/expand`, `/btw-async`) and Markdown-based skill framework.
 - **`.codex`**: Optimized for **OpenAI Codex** (and similar IDE-based agents like Cursor/Copilot). Uses `AGENTS.md` as the canonical policy layer, `skills/` as reusable workflows, `report-contract/` as the tracked runtime-record contract, and optional `agents/` presets for focused roles including next-step planning. `prompts/` is retained only as a compatibility layer.
 
@@ -32,6 +33,12 @@ You can use the included `Makefile` to install the appropriate configuration int
 ```bash
 # Install generic .agent configs
 make install DEST=/path/to/your/project
+
+# Install Antigravity (.antigravity) configs
+make install-antigravity DEST=/path/to/your/project
+
+# Install Antigravity configs globally to Home (~/.gemini/config and ~/.gemini/antigravity-cli)
+make install-home-antigravity
 
 # Install Claude Code (.claude) configs
 make install-claude DEST=/path/to/your/project

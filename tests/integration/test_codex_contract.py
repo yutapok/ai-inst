@@ -40,6 +40,8 @@ class CodexContractIntegrationTests(unittest.TestCase):
         self.assertIn("make install-home-codex-core", proc.stdout)
         self.assertIn("make install-home-codex", proc.stdout)
         self.assertIn("make install-home-codex-minimal", proc.stdout)
+        self.assertIn("make install-antigravity", proc.stdout)
+        self.assertIn("make install-home-antigravity", proc.stdout)
 
     def test_install_claude_copies_btw_async_and_planner_skill(self) -> None:
         print("=== CLI Contract Encompassed Packages ===")
@@ -267,7 +269,6 @@ class CodexContractIntegrationTests(unittest.TestCase):
             (stale / "agents" / "obsolete.txt").write_text("old")
             proc = self.run_cmd("make", "install-home-claude", env=env)
             self.assertIn("Home installation complete. Claude Code is now globally configured", proc.stdout)
-
             home_claude = Path(tmp_home) / ".claude"
             self.assertTrue((home_claude / "CLAUDE.md").exists())
             self.assertTrue((home_claude / "commands" / "btw-async.md").exists())
@@ -277,6 +278,51 @@ class CodexContractIntegrationTests(unittest.TestCase):
             self.assertFalse((home_claude / "commands" / "obsolete.txt").exists())
             self.assertFalse((home_claude / "skills" / "obsolete.txt").exists())
             self.assertFalse((home_claude / "agents" / "obsolete.txt").exists())
+
+    def test_install_antigravity_copies_rules_workflows_and_skills(self) -> None:
+        print("=== CLI Contract Encompassed Packages ===")
+        print(".antigravity/ANTIGRAVITY.md")
+        print(".antigravity/workflows/*.md")
+        print(".antigravity/skills/*/SKILL.md")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            dest = Path(tmpdir) / "dest"
+            dest.mkdir()
+            proc = self.run_cmd("make", "install-antigravity", f"DEST={dest}")
+            self.assertIn("Installation complete. Target project is now ready for Antigravity.", proc.stdout)
+
+            antigravity_root = dest / ".antigravity"
+            self.assertTrue((antigravity_root / "ANTIGRAVITY.md").exists())
+            self.assertTrue((antigravity_root / "workflows" / "mission.md").exists())
+            self.assertTrue((antigravity_root / "skills" / "planner" / "SKILL.md").exists())
+            self.assertTrue((antigravity_root / "skills" / "dead-code-cleanup" / "SKILL.md").exists())
+
+            self.assert_contains(antigravity_root / "ANTIGRAVITY.md", "Portable Development Loop for Antigravity")
+            self.assert_contains(
+                antigravity_root / "workflows" / "mission.md",
+                "*(Required skill: `.antigravity/skills/investigation/SKILL.md`)*",
+            )
+            self.assert_contains(
+                antigravity_root / "skills" / "planner" / "SKILL.md",
+                "Workflow Planner",
+            )
+
+    def test_install_home_antigravity_copies_global_skills(self) -> None:
+        print("=== CLI Contract Encompassed Packages ===")
+        print(".antigravity/skills")
+        with tempfile.TemporaryDirectory() as tmp_home:
+            env = os.environ.copy()
+            env["HOME"] = tmp_home
+
+            proc = self.run_cmd("make", "install-home-antigravity", env=env)
+            self.assertIn("Home installation complete. Antigravity is now globally configured with skills.", proc.stdout)
+
+            home_gemini_config = Path(tmp_home) / ".gemini" / "config" / "skills"
+            self.assertTrue((home_gemini_config / "planner" / "SKILL.md").exists())
+            self.assertTrue((home_gemini_config / "dead-code-cleanup" / "SKILL.md").exists())
+
+            home_gemini_cli = Path(tmp_home) / ".gemini" / "antigravity-cli" / "skills"
+            self.assertTrue((home_gemini_cli / "planner" / "SKILL.md").exists())
+            self.assertTrue((home_gemini_cli / "dead-code-cleanup" / "SKILL.md").exists())
 
 
 if __name__ == "__main__":

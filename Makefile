@@ -1,10 +1,12 @@
-.PHONY: install install-claude install-codex install-home-claude install-home-codex install-home-codex-minimal install-home-codex-core help test
+.PHONY: install install-claude install-codex install-home-claude install-home-codex install-home-codex-minimal install-home-codex-core help test install-antigravity install-home-antigravity
 
 help:
 	@echo "Agentic Architecture Pattern - Antigravity Configurations"
 	@echo ""
 	@echo "Available Targets:"
 	@echo "  make install              DEST=/path/to/project  - Installs default (.agent) configs"
+	@echo "  make install-antigravity  DEST=/path/to/project  - Installs Antigravity (.antigravity) configs"
+	@echo "  make install-home-antigravity                    - Installs Antigravity configs to Home (~/.gemini/config/skills/ & ~/.gemini/antigravity-cli/skills/)"
 	@echo "  make install-claude       DEST=/path/to/project  - Installs Claude Code (.claude) configs"
 	@echo "  make install-home-claude                         - Installs Claude Code configs to Home (~/.claude/)"
 	@echo "  make install-codex        DEST=/path/to/project  - Installs Codex (.codex) configs"
@@ -13,7 +15,7 @@ help:
 	@echo "  make install-home-codex-minimal                  - Installs Codex configs to Home (~/.codex/) without prompts"
 	@echo ""
 	@echo "Example:"
-	@echo "  make install-home-claude"
+	@echo "  make install-home-antigravity"
 
 test:
 	@python3 -m unittest discover -s tests/integration -v
@@ -121,3 +123,32 @@ install-home-codex-minimal:
 	@cp -Rf .codex/agents/ "$(HOME)/.codex/agents/"
 	@cp -Rf .codex/report-contract/ "$(HOME)/.codex/report-contract/"
 	@echo "Minimal home installation complete. Codex is now globally configured with Antigravity (AGENTS.md + skills + agents + report-contract)."
+
+install-antigravity:
+	@if [ -z "$(DEST)" ]; then \
+		echo "Error: DEST variable is required."; \
+		echo "Usage: make install-antigravity DEST=/path/to/target/project"; \
+		exit 1; \
+	fi
+	@DEST_ABS=$$(realpath "$(DEST)" 2>/dev/null || echo ""); \
+	if [ -z "$$DEST_ABS" ]; then echo "Error: DEST path '$(DEST)' is not resolvable."; exit 1; fi; \
+	if [ -d "$$DEST_ABS/.antigravity" ] && [ -z "$(FORCE)" ]; then \
+		echo "Warning: $$DEST_ABS/.antigravity already exists. Use FORCE=1 to overwrite."; exit 1; \
+	fi; \
+	echo "Installing .antigravity to $$DEST_ABS..."; \
+	rm -rf "$$DEST_ABS/.antigravity"; \
+	mkdir -p "$$DEST_ABS/.antigravity/workflows" "$$DEST_ABS/.antigravity/skills"; \
+	cp -f .antigravity/ANTIGRAVITY.md "$$DEST_ABS/.antigravity/"; \
+	cp -Rf .antigravity/workflows/ "$$DEST_ABS/.antigravity/workflows/"; \
+	cp -Rf .antigravity/skills/ "$$DEST_ABS/.antigravity/skills/"; \
+	echo "Installation complete. Target project is now ready for Antigravity."
+
+install-home-antigravity:
+	@echo "Installing Antigravity configs to Home..."
+	@echo "1. Installing skills to $(HOME)/.gemini/config/skills/..."
+	@mkdir -p "$(HOME)/.gemini/config/skills"
+	@cp -Rf .antigravity/skills/ "$(HOME)/.gemini/config/skills/"
+	@echo "2. Installing skills to $(HOME)/.gemini/antigravity-cli/skills/..."
+	@mkdir -p "$(HOME)/.gemini/antigravity-cli/skills"
+	@cp -Rf .antigravity/skills/ "$(HOME)/.gemini/antigravity-cli/skills/"
+	@echo "Home installation complete. Antigravity is now globally configured with skills."
