@@ -49,49 +49,57 @@ Additional optional layers are:
 
 - **`agents/`** for role presets and tool-specific execution hints
 
-## Skill Routing
+## Core 7 Skills & State Machine
 
-Use the following skills by default for Codex tasks:
+Codex operates on **7 Core Skills** connected as an explicit execution state graph:
 
-- **Investigation / debugging / impact analysis / research** → `skills/investigation/SKILL.md`
-- **Locking observable CLI behavior** → `skills/cli-contract/SKILL.md`
-- **Minimal viable end-to-end implementation** → `skills/tracer-bullet/SKILL.md`
-- **Expanding coverage and hardening behavior** → `skills/test-first/SKILL.md`
-- **Suggesting the next best action at workflow checkpoints** → `skills/planner/SKILL.md`
-- **Architecture drift checks and ADR decisions** → `skills/architecture/SKILL.md`
-- **Heuristic review for architecture, security, and maintainability** → `skills/review/SKILL.md`
-- **Post-implementation code reduction and dead-code removal** → `skills/dead-code-cleanup/SKILL.md`
-- **Pre-commit leak / privacy / secret exposure review** → `skills/pre-commit-leak-review/SKILL.md`
-- **Runtime record hygiene / observability contract enforcement** → `skills/report-observability/SKILL.md`
+```mermaid
+stateDiagram-v2
+    [*] --> investigation: 1. 課題・コードベース調査 (事実と仮説)
+    investigation --> tracer_bullet: 事実確定
+    tracer_bullet --> test_first: 2. 最小E2E開通 & 契約固定
+    test_first --> review: 3. PBT/不変条件保護 & テスト拡張
+    
+    review --> architecture: 4. 品質・設計クリア
+    review --> tracer_bullet: 欠陥発見・差し戻し (Back Edge)
+    
+    state architecture {
+        [*] --> Drift判定
+        Drift判定 --> NO_CHANGE
+        Drift判定 --> MINOR_UPDATE
+        Drift判定 --> STRUCTURAL_ADJUST
+    }
+    
+    STRUCTURAL_ADJUST --> [*]: 【STOP】 人間へのADR提案
+    NO_CHANGE --> dead_code_cleanup: 5. 境界維持確認
+    MINOR_UPDATE --> dead_code_cleanup: ドキュメント修正
+    
+    dead_code_cleanup --> pre_commit_leak_review: 6. 不要コード刈り取り
+    pre_commit_leak_review --> [*]: 7. 漏洩検査完了・コミット準備
+```
 
-If multiple skills apply, prefer the smallest set that matches the current task and preserve this order of operations:
+### Skill Routing Table
 
-1. Investigate
-2. Lock the observable contract when relevant
-3. Prove the minimal path
-4. Expand coverage and invariants
-5. Review for drift or broader quality risks
-6. Remove dead, duplicate, or pointless code once behavior is already protected
+Use the following 7 skills by default:
+
+- **1. Investigation / Research / Impact Analysis** → `skills/investigation/SKILL.md`
+- **2. Minimal viable end-to-end implementation & contract locking** → `skills/tracer-bullet/SKILL.md`
+- **3. Expanding coverage and hardening invariants (PBT)** → `skills/test-first/SKILL.md`
+- **4. Heuristic review for architecture, security, and maintainability** → `skills/review/SKILL.md`
+- **5. Architecture drift checks and ADR decisions** → `skills/architecture/SKILL.md`
+- **6. Post-implementation code reduction and dead-code removal** → `skills/dead-code-cleanup/SKILL.md`
+- **7. Pre-commit leak / privacy / secret exposure review** → `skills/pre-commit-leak-review/SKILL.md`
 
 ## Adaptive Workflow Policy
 
-Codex must infer the current workflow state from the user's prompt and the current code maturity. The user does not need to name a phase.
+Codex must navigate the state graph based on task maturity:
 
-The internal workflow states are:
-
-- `INVESTIGATE`
-- `CONTRACT_LOCK`
-- `TRACER`
-- `EXPAND`
-- `REVIEW`
-- `DRIFT_CHECK`
-- `HUMAN_DECISION`
-
-These states are an internal routing tool, not a user-facing requirement. They are not strictly linear. Codex may move forward, backward, or temporarily insert `REVIEW` / `DRIFT_CHECK` when the situation warrants it.
-
-`CONTRACT_LOCK` is the point where Codex must decide whether the public contract is safe enough to build behind. It is not enough that a contract exists; Codex must also check whether the contract could pass while still missing the user's real goal.
-
-When the task introduces or changes a public CLI or API contract, Codex must run a provocation check by asking for the smallest case that would pass the contract but still be wrong. The candidate counterexample must be classified as a success-condition error, boundary error, or omission error. If the contract change reaches a major checkpoint, Codex must surface a short `Contract Review:` block for the human that covers all three categories.
+- `INVESTIGATE`: Gather facts, separate hypotheses, declare unknowns before modifying.
+- `TRACER`: Lock the observable contract (CLI/API boundary) and prove the minimal happy path locally.
+- `EXPAND`: Expand coverage via GWT scenarios and enforce invariants using Property-Based Testing (PBT).
+- `REVIEW`: Evaluate cross-module impact, security, performance, and code quality.
+- `DRIFT_CHECK`: Classify architectural changes into `NO_CHANGE`, `MINOR_UPDATE`, or `STRUCTURAL_ADJUST`.
+- `HUMAN_DECISION`: [STOP] when `STRUCTURAL_ADJUST` occurs or when public boundaries change.
 
 ### Tracer-before-Test-First Rule
 
@@ -145,8 +153,10 @@ If the likely result is `STRUCTURAL_ADJUST`, stop autonomous evolution and move 
 
 ### Next Action Contract
 
-At major checkpoints, Codex must delegate output generation to the **Workflow Planner skill** (`.agent/skills/planner/SKILL.md`).
-- Adhere strictly to the `次のステップ:` output contract, options mapping, and `Verify:` specifications detailed in the planner skill.
+At major checkpoints, Codex must present a concise `次のステップ:` section containing:
+1. **推奨アクション**: メインパスの次のステップ（状態遷移グラフの次のノード）
+2. **代替アクション**: スコープ調整や別アプローチ
+3. **検証アクション**: `Verify:` で実行可能なコマンド例
 
 ## Record-Only Observability
 

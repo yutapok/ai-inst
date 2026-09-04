@@ -8,6 +8,7 @@ description: Design, implementation, and verification techniques for a tracer bu
 A tracer bullet is a technique to build the "smallest technically viable path" before attempting to draft a "perfect architecture." It rapidly uncovers unknown design complexities, integration gaps, and UX inadequacies early in the process.
 
 ## Rules: Do
+- **Lock the Observable Contract First**: Define and lock the public boundary (CLI inputs, flags, exit codes, and output formats) via a minimal in-process contract test before writing internal implementation.
 - **Pass the Minimal End-to-End**: Write a contiguous execution flow that pierces through the system—from the CLI input down to the bottom layer (e.g., database access or external API calls) if necessary.
 - **Run Locally**: Actually execute the code and confirm that it produces the intended results (Proof of Viability).
 - **Allow Hardcoding**: Defer complex branching and generalizations. Prioritize getting the "Happy Path" to work first.

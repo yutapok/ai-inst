@@ -1,0 +1,27 @@
+{
+  "safety-gate": {
+    "PreToolUse": [
+      {
+        "matcher": "run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"import sys, json; data=json.load(sys.stdin); cmd=data.get('toolCall',{}).get('args',{}).get('CommandLine',''); dangerous=['rm -rf /', 'git reset --hard', 'drop database']; blocked=any(d in cmd for d in dangerous); print(json.dumps({'decision': 'deny' if blocked else 'allow', 'reason': 'Destructive command blocked by safety policy' if blocked else ''}))\""
+          }
+        ]
+      }
+    ]
+  },
+  "verification-guard": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 -c \"import sys, json; print(json.dumps({'decision': 'allow'}))\""
+          }
+        ]
+      }
+    ]
+  }
+}

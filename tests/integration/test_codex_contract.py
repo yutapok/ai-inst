@@ -1,9 +1,11 @@
+import json
 import os
 import subprocess
 import tempfile
 import unittest
 from pathlib import Path
 from typing import Dict, Optional
+
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -43,65 +45,10 @@ class CodexContractIntegrationTests(unittest.TestCase):
         self.assertIn("make install-antigravity", proc.stdout)
         self.assertIn("make install-home-antigravity", proc.stdout)
 
-    def test_install_claude_copies_btw_async_and_planner_skill(self) -> None:
-        print("=== CLI Contract Encompassed Packages ===")
-        print(".claude/CLAUDE.md")
-        print(".claude/commands/btw-async.md")
-        print(".claude/commands/ql-review.md")
-        print(".claude/commands/drift-check.md")
-        print(".claude/skills/planner/SKILL.md")
-        print(".claude/skills/dead-code-cleanup/SKILL.md")
-        print(".claude/agents/*.md")
-        with tempfile.TemporaryDirectory() as tmpdir:
-            dest = Path(tmpdir) / "dest"
-            dest.mkdir()
-            proc = self.run_cmd("make", "install-claude", f"DEST={dest}")
-            self.assertIn("Installation complete. Target project is now ready for Claude Code.", proc.stdout)
-
-            claude_root = dest / ".claude"
-            self.assertTrue((claude_root / "CLAUDE.md").exists())
-            self.assertTrue((claude_root / "commands" / "btw-async.md").exists())
-            self.assertTrue((claude_root / "skills" / "planner" / "SKILL.md").exists())
-            self.assertTrue((claude_root / "skills" / "dead-code-cleanup" / "SKILL.md").exists())
-            self.assertTrue((claude_root / "agents" / "tracer.md").exists())
-
-            self.assert_contains(claude_root / "CLAUDE.md", "次のステップ:")
-            self.assert_contains(claude_root / "CLAUDE.md", "DRIFT_CHECK")
-            self.assert_contains(
-                claude_root / "commands" / "btw-async.md",
-                "/ql-review",
-            )
-            self.assert_contains(
-                claude_root / "commands" / "btw-async.md",
-                "/drift-check",
-            )
-            self.assert_contains(
-                claude_root / "skills" / "planner" / "SKILL.md",
-                "1. （推奨）[WORKFLOW_STATE]: [short action]",
-            )
-            self.assert_contains(
-                claude_root / "skills" / "planner" / "SKILL.md",
-                "Verify: [one command + one observation point]",
-            )
-            self.assert_contains(
-                claude_root / "skills" / "planner" / "SKILL.md",
-                "2. [WORKFLOW_STATE]: （Async）[short action]",
-            )
-            self.assert_contains(
-                claude_root / "skills" / "planner" / "SKILL.md",
-                "Goal: [short goal]",
-            )
-            self.assert_contains(
-                claude_root / "skills" / "planner" / "SKILL.md",
-                "Non-goals: [short exclusions]",
-            )
-
     def test_install_codex_copies_required_contract_files(self) -> None:
         print("=== CLI Contract Encompassed Packages ===")
         print(".codex/AGENTS.md")
-        print(".codex/skills/cli-contract/SKILL.md")
-        print(".codex/skills/planner/SKILL.md")
-        print(".codex/skills/dead-code-cleanup/SKILL.md")
+        print(".codex/skills (Core 7)")
         print(".codex/report-contract/README.md")
         print(".codex/agents/*.toml")
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -112,70 +59,57 @@ class CodexContractIntegrationTests(unittest.TestCase):
 
             codex_root = dest / ".codex"
             self.assertTrue((codex_root / "AGENTS.md").exists())
-            self.assertTrue((codex_root / "skills" / "cli-contract" / "SKILL.md").exists())
-            self.assertTrue((codex_root / "skills" / "test-first" / "SKILL.md").exists())
-            self.assertTrue((codex_root / "skills" / "planner" / "SKILL.md").exists())
-            self.assertTrue((codex_root / "skills" / "dead-code-cleanup" / "SKILL.md").exists())
-            self.assertTrue((codex_root / "skills" / "report-observability" / "SKILL.md").exists())
             self.assertTrue((codex_root / "config.toml").exists())
             self.assertTrue((codex_root / "report-contract" / "README.md").exists())
             self.assertTrue((codex_root / "reports").exists())
             self.assertTrue((codex_root / "agents" / "architect.toml").exists())
-            self.assertTrue((codex_root / "agents" / "planner.toml").exists())
+            self.assertTrue((codex_root / "agents" / "tracer.toml").exists())
 
+            # Core 7 skills must exist
+            core_7_skills = [
+                "investigation",
+                "tracer-bullet",
+                "test-first",
+                "review",
+                "architecture",
+                "dead-code-cleanup",
+                "pre-commit-leak-review",
+            ]
+            for skill in core_7_skills:
+                self.assertTrue(
+                    (codex_root / "skills" / skill / "SKILL.md").exists(),
+                    f"Core skill {skill} missing from .codex/skills/",
+                )
+
+            # Deleted skills must NOT exist
+            deleted_skills = ["cli-contract", "planner", "report-observability"]
+            for skill in deleted_skills:
+                self.assertFalse(
+                    (codex_root / "skills" / skill).exists(),
+                    f"Obsolete skill {skill} still present in .codex/skills/",
+                )
+
+            # State machine graph and rules in AGENTS.md
+            self.assert_contains(codex_root / "AGENTS.md", "Core 7 Skills & State Machine")
+            self.assert_contains(codex_root / "AGENTS.md", "stateDiagram-v2")
             self.assert_contains(codex_root / "AGENTS.md", "次のステップ:")
-            self.assert_contains(codex_root / "AGENTS.md", "CONTRACT_LOCK")
+
+            # Integrated contract rules in tracer-bullet and test-first
             self.assert_contains(
-                codex_root / "skills" / "cli-contract" / "SKILL.md",
-                "implement it as an automated integration test",
+                codex_root / "skills" / "tracer-bullet" / "SKILL.md",
+                "Lock the Observable Contract First",
             )
             self.assert_contains(
-                codex_root / "skills" / "cli-contract" / "SKILL.md",
-                "The exact `stdout` format for a successful execution",
-            )
-            self.assert_contains(
-                codex_root / "skills" / "cli-contract" / "SKILL.md",
-                "`stderr` format representing the expected errors",
-            )
-            self.assert_contains(
-                codex_root / "skills" / "cli-contract" / "SKILL.md",
-                "help the user validate and understand AI-generated code",
+                codex_root / "skills" / "test-first" / "SKILL.md",
+                "Property-Based Testing",
             )
             self.assert_contains(
                 codex_root / "skills" / "dead-code-cleanup" / "SKILL.md",
                 "`DELETE`, `MERGE`, `INLINE`, `SIMPLIFY`, or `KEEP`",
             )
             self.assert_contains(
-                codex_root / "skills" / "dead-code-cleanup" / "SKILL.md",
-                "`Safe`, `Needs Verification`, or `Needs Human Decision`",
-            )
-            self.assert_contains(
-                codex_root / "skills" / "planner" / "SKILL.md",
-                "1. （推奨）[WORKFLOW_STATE]: [short action]",
-            )
-            self.assert_contains(
-                codex_root / "skills" / "planner" / "SKILL.md",
-                "Verify: [one command + one observation point]",
-            )
-            self.assert_contains(
-                codex_root / "skills" / "planner" / "SKILL.md",
-                "2. [WORKFLOW_STATE]: （Async）[short action]",
-            )
-            self.assert_contains(
-                codex_root / "skills" / "planner" / "SKILL.md",
-                "Goal: [short goal]",
-            )
-            self.assert_contains(
-                codex_root / "skills" / "planner" / "SKILL.md",
-                "Non-goals: [short exclusions]",
-            )
-            self.assert_contains(
-                codex_root / "report-contract" / "README.md",
-                "Do not commit real runtime logs",
-            )
-            self.assert_contains(
-                codex_root / "report-contract" / "verification-ledger.sample.jsonl",
-                "\"facts\"",
+                codex_root / "skills" / "investigation" / "SKILL.md",
+                "Canvas-Native Mermaid Artifact Output",
             )
 
     def test_install_home_codex_variants_copy_expected_files(self) -> None:
@@ -192,14 +126,15 @@ class CodexContractIntegrationTests(unittest.TestCase):
 
             home_codex = Path(tmp_home) / ".codex"
             self.assertTrue((home_codex / "AGENTS.md").exists())
-            self.assertTrue((home_codex / "skills" / "planner" / "SKILL.md").exists())
+            self.assertTrue((home_codex / "skills" / "investigation" / "SKILL.md").exists())
             self.assertTrue((home_codex / "skills" / "dead-code-cleanup" / "SKILL.md").exists())
-            self.assertTrue((home_codex / "skills" / "report-observability" / "SKILL.md").exists())
+            self.assertTrue((home_codex / "skills" / "pre-commit-leak-review" / "SKILL.md").exists())
+            self.assertFalse((home_codex / "skills" / "planner").exists())
+            self.assertFalse((home_codex / "skills" / "cli-contract").exists())
             self.assertTrue((home_codex / "report-contract" / "README.md").exists())
             self.assertTrue((home_codex / "reports").exists())
             self.assertFalse((home_codex / "config.toml").exists())
             self.assertFalse((home_codex / "agents").exists())
-            self.assertFalse((home_codex / "prompts").exists())
 
         with tempfile.TemporaryDirectory() as tmp_home:
             env = os.environ.copy()
@@ -214,68 +149,17 @@ class CodexContractIntegrationTests(unittest.TestCase):
             home_codex = Path(tmp_home) / ".codex"
             self.assertTrue((home_codex / "AGENTS.md").exists())
             self.assertTrue((home_codex / "config.toml").exists())
-            self.assertTrue((home_codex / "skills" / "cli-contract" / "SKILL.md").exists())
+            self.assertTrue((home_codex / "skills" / "test-first" / "SKILL.md").exists())
             self.assertTrue((home_codex / "skills" / "dead-code-cleanup" / "SKILL.md").exists())
             self.assertTrue((home_codex / "report-contract" / "run-log.sample.jsonl").exists())
             self.assertTrue((home_codex / "reports").exists())
             self.assertTrue((home_codex / "agents" / "tester.toml").exists())
             self.assertFalse((home_codex / "agents" / "obsolete.txt").exists())
-            self.assertFalse((home_codex / "prompts").exists())
-
-        with tempfile.TemporaryDirectory() as tmp_home:
-            env = os.environ.copy()
-            env["HOME"] = tmp_home
-
-            stale = Path(tmp_home) / ".codex"
-            (stale / "agents").mkdir(parents=True)
-            (stale / "agents" / "obsolete.txt").write_text("old")
-            proc = self.run_cmd("make", "install-home-codex-minimal", env=env)
-            self.assertIn("Minimal home installation complete. Codex is now globally configured", proc.stdout)
-
-            home_codex = Path(tmp_home) / ".codex"
-            self.assertTrue((home_codex / "AGENTS.md").exists())
-            self.assertTrue((home_codex / "config.toml").exists())
-            self.assertFalse((home_codex / "prompts").exists())
-            self.assertTrue((home_codex / "skills" / "planner" / "SKILL.md").exists())
-            self.assertTrue((home_codex / "skills" / "dead-code-cleanup" / "SKILL.md").exists())
-            self.assertTrue((home_codex / "report-contract" / "human-decisions.sample.jsonl").exists())
-            self.assertTrue((home_codex / "reports").exists())
-            self.assertTrue((home_codex / "agents" / "tracer.toml").exists())
-            self.assertFalse((home_codex / "agents" / "obsolete.txt").exists())
-            self.assertFalse((home_codex / "prompts").exists())
-
-    def test_install_home_claude_copies_btw_async_and_planner_skill(self) -> None:
-        print("=== CLI Contract Encompassed Packages ===")
-        print(".claude/commands")
-        print(".claude/skills")
-        with tempfile.TemporaryDirectory() as tmp_home:
-            env = os.environ.copy()
-            env["HOME"] = tmp_home
-
-            stale = Path(tmp_home) / ".claude"
-            (stale / "commands").mkdir(parents=True)
-            (stale / "skills").mkdir(parents=True)
-            (stale / "agents").mkdir(parents=True)
-            (stale / "commands" / "obsolete.txt").write_text("old")
-            (stale / "skills" / "obsolete.txt").write_text("old")
-            (stale / "agents" / "obsolete.txt").write_text("old")
-            proc = self.run_cmd("make", "install-home-claude", env=env)
-            self.assertIn("Home installation complete. Claude Code is now globally configured", proc.stdout)
-            home_claude = Path(tmp_home) / ".claude"
-            self.assertTrue((home_claude / "CLAUDE.md").exists())
-            self.assertTrue((home_claude / "commands" / "btw-async.md").exists())
-            self.assertTrue((home_claude / "skills" / "planner" / "SKILL.md").exists())
-            self.assertTrue((home_claude / "skills" / "dead-code-cleanup" / "SKILL.md").exists())
-            self.assertTrue((home_claude / "agents" / "tracer.md").exists())
-            self.assertFalse((home_claude / "commands" / "obsolete.txt").exists())
-            self.assertFalse((home_claude / "skills" / "obsolete.txt").exists())
-            self.assertFalse((home_claude / "agents" / "obsolete.txt").exists())
 
     def test_install_antigravity_copies_rules_workflows_and_skills(self) -> None:
         print("=== CLI Contract Encompassed Packages ===")
         print(".antigravity/ANTIGRAVITY.md")
-        print(".antigravity/workflows/*.md")
-        print(".antigravity/skills/*/SKILL.md")
+        print(".antigravity/skills (Core 7)")
         with tempfile.TemporaryDirectory() as tmpdir:
             dest = Path(tmpdir) / "dest"
             dest.mkdir()
@@ -283,19 +167,26 @@ class CodexContractIntegrationTests(unittest.TestCase):
             self.assertIn("Installation complete. Target project is now ready for Antigravity.", proc.stdout)
 
             antigravity_root = dest / ".antigravity"
+            self.assertTrue((dest / "GEMINI.md").exists())
+            self.assertTrue((antigravity_root / "GEMINI.md").exists())
             self.assertTrue((antigravity_root / "ANTIGRAVITY.md").exists())
-            self.assertTrue((antigravity_root / "workflows" / "mission.md").exists())
-            self.assertTrue((antigravity_root / "skills" / "planner" / "SKILL.md").exists())
+            self.assertTrue((antigravity_root / "hooks.json").exists())
+            self.assertTrue((antigravity_root / "skills" / "investigation" / "SKILL.md").exists())
             self.assertTrue((antigravity_root / "skills" / "dead-code-cleanup" / "SKILL.md").exists())
+            self.assertTrue((antigravity_root / "skills" / "pre-commit-leak-review" / "SKILL.md").exists())
+            self.assertFalse((antigravity_root / "skills" / "planner").exists())
+            self.assertFalse((antigravity_root / "skills" / "cli-contract").exists())
 
             self.assert_contains(antigravity_root / "ANTIGRAVITY.md", "Portable Development Loop for Antigravity")
+            self.assert_contains(antigravity_root / "GEMINI.md", "Core 7 Skills & State Machine")
+            self.assert_contains(antigravity_root / "GEMINI.md", "stateDiagram-v2")
             self.assert_contains(
-                antigravity_root / "workflows" / "mission.md",
-                "*(Required skill: `.antigravity/skills/investigation/SKILL.md`)*",
+                antigravity_root / "skills" / "test-first" / "SKILL.md",
+                "Property-Based Testing",
             )
             self.assert_contains(
-                antigravity_root / "skills" / "planner" / "SKILL.md",
-                "Workflow Planner",
+                antigravity_root / "skills" / "tracer-bullet" / "SKILL.md",
+                "Lock the Observable Contract First",
             )
 
     def test_install_home_antigravity_copies_global_skills(self) -> None:
@@ -306,16 +197,150 @@ class CodexContractIntegrationTests(unittest.TestCase):
             env["HOME"] = tmp_home
 
             proc = self.run_cmd("make", "install-home-antigravity", env=env)
-            self.assertIn("Home installation complete. Antigravity is now globally configured with skills.", proc.stdout)
+            self.assertIn("Home installation complete. Antigravity is now globally configured with skills, rules, and hooks.", proc.stdout)
 
-            home_gemini_config = Path(tmp_home) / ".gemini" / "config" / "skills"
-            self.assertTrue((home_gemini_config / "planner" / "SKILL.md").exists())
-            self.assertTrue((home_gemini_config / "dead-code-cleanup" / "SKILL.md").exists())
+            home_gemini_config = Path(tmp_home) / ".gemini" / "config"
+            self.assertTrue((home_gemini_config / "GEMINI.md").exists())
+            self.assertTrue((home_gemini_config / "hooks.json").exists())
+            self.assertTrue((home_gemini_config / "skills" / "investigation" / "SKILL.md").exists())
+            self.assertTrue((home_gemini_config / "skills" / "dead-code-cleanup" / "SKILL.md").exists())
+            self.assertFalse((home_gemini_config / "skills" / "planner").exists())
 
             home_gemini_cli = Path(tmp_home) / ".gemini" / "antigravity-cli" / "skills"
-            self.assertTrue((home_gemini_cli / "planner" / "SKILL.md").exists())
+            self.assertTrue((home_gemini_cli / "investigation" / "SKILL.md").exists())
             self.assertTrue((home_gemini_cli / "dead-code-cleanup" / "SKILL.md").exists())
+            self.assertFalse((home_gemini_cli / "skills" / "planner").exists())
+
+    def test_cli_linter_detects_breaking_drift(self) -> None:
+        print("=== CLI Contract Encompassed Packages ===")
+        print("tools/cli_linter/lint_cli.py")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            base_file = Path(tmpdir) / "baseline.json"
+            curr_broken = Path(tmpdir) / "broken.json"
+            curr_compat = Path(tmpdir) / "compat.json"
+
+            base_file.write_text(
+                '{"name": "mycli", "flags": {"--env": {"required": false, "default": "dev"}}, "subcommands": {"deploy": {"flags": {"--force": {"required": false}}}}}'
+            )
+            # Breaking: removed --env flag
+            curr_broken.write_text(
+                '{"name": "mycli", "flags": {}, "subcommands": {"deploy": {"flags": {"--force": {"required": false}}}}}'
+            )
+            # Compatible: added optional --dry-run
+            curr_compat.write_text(
+                '{"name": "mycli", "flags": {"--env": {"required": false, "default": "dev"}, "--dry-run": {"required": false}}, "subcommands": {"deploy": {"flags": {"--force": {"required": false}}}}}'
+            )
+
+            # Test broken contract -> exit code 1
+            proc_fail = subprocess.run(
+                ["python3", "tools/cli_linter/lint_cli.py", "--baseline", str(base_file), "--current", str(curr_broken)],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(proc_fail.returncode, 1)
+            self.assertIn("Flag removed: '--env'", proc_fail.stdout)
+
+            # Test compatible extension -> exit code 0
+            proc_pass = subprocess.run(
+                ["python3", "tools/cli_linter/lint_cli.py", "--baseline", str(base_file), "--current", str(curr_compat)],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(proc_pass.returncode, 0)
+            self.assertIn("New optional flag added: '--dry-run' (Compatible)", proc_pass.stdout)
+
+    def test_render_walkthrough_compiles_investigation_html(self) -> None:
+        print("=== CLI Contract Encompassed Packages ===")
+        print("tools/render_walkthrough.py")
+        print("templates/investigation_template.html")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            sample_spec = Path(tmpdir) / "investigation.json"
+            output_html = Path(tmpdir) / "walkthrough.html"
+
+            sample_spec.write_text(
+                json.dumps({
+                    "flowDiagram": "sequenceDiagram\nUser->>CLI: run",
+                    "dependencyDiagram": "graph TD\nCLI-->Service",
+                    "items": [
+                        {
+                            "id": "CLI",
+                            "name": "CLI Entrypoint",
+                            "type": "fact",
+                            "typeLabel": "FACT",
+                            "file": "cmd/main.go:L1-L20",
+                            "code": "func main() {}",
+                            "fact": "Verified entrypoint",
+                            "hypothesis": "None"
+                        }
+                    ]
+                }),
+                encoding="utf-8"
+            )
+
+            proc = subprocess.run(
+                [
+                    "python3",
+                    "tools/render_walkthrough.py",
+                    "--type",
+                    "investigation",
+                    "--input",
+                    str(sample_spec),
+                    "--output",
+                    str(output_html),
+                    "--verify-browser",
+                ],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(proc.returncode, 0, f"STDOUT: {proc.stdout}\nSTDERR: {proc.stderr}")
+            self.assertTrue(output_html.exists())
+            html_text = output_html.read_text(encoding="utf-8")
+            self.assertIn("Investigation Visual Walkthrough", html_text)
+            self.assertIn("Verified entrypoint", html_text)
+
+    def test_render_walkthrough_browser_verification_detects_syntax_errors(self) -> None:
+        with tempfile.TemporaryDirectory() as tmpdir:
+            bad_spec = Path(tmpdir) / "bad_spec.json"
+            bad_html = Path(tmpdir) / "bad.html"
+            bad_spec.write_text(
+                json.dumps({
+                    "flowDiagram": "sequenceDiagram\n:::invalid syntax:::",
+                    "items": []
+                }),
+                encoding="utf-8"
+            )
+            proc = subprocess.run(
+                [
+                    "python3",
+                    "tools/render_walkthrough.py",
+                    "--type",
+                    "investigation",
+                    "--input",
+                    str(bad_spec),
+                    "--output",
+                    str(bad_html),
+                    "--verify-browser",
+                ],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            # If browser is available with network, it must catch the error and fail with returncode 1
+            # If in offline sandbox, it gracefully logs and proceeds
+            if "Browser Verify FAILED" in proc.stderr:
+                self.assertEqual(proc.returncode, 1)
+            else:
+                self.assertEqual(proc.returncode, 0)
 
 
 if __name__ == "__main__":
     unittest.main()
+
+

@@ -1,0 +1,1389 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agentic State Transition Graph (Enhanced Go Architecture)</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --card-bg: #161b22;
+      --border: #30363d;
+      --text: #c9d1d9;
+      --text-muted: #8b949e;
+      --accent: #58a6ff;
+      --accent-glow: rgba(88, 166, 255, 0.4);
+      --success: #3fb950;
+      --success-bg: rgba(63, 185, 80, 0.15);
+      --warning: #d29922;
+      --danger: #f85149;
+      --danger-bg: rgba(248, 81, 73, 0.15);
+      --code-bg: #090d13;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    h1 { font-size: 1.25rem; font-weight: 600; color: #f0f6fc; display: flex; align-items: center; gap: 8px; }
+    .badge {
+      font-size: 0.75rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: rgba(88, 166, 255, 0.15);
+      color: var(--accent);
+      border: 1px solid rgba(88, 166, 255, 0.3);
+    }
+
+    /* 上部: グラフエリア (縦並びで広々表示) */
+    .graph-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px;
+      position: relative;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+    }
+    .svg-container {
+      width: 100%;
+      height: 380px;
+      overflow: visible;
+    }
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+
+    /* ノードスタイル */
+    .node-group {
+      cursor: pointer;
+      transition: transform 0.2s ease;
+    }
+    .node-group:hover {
+      transform: translateY(-2px);
+    }
+    .node-box {
+      rx: 8px;
+      fill: #1f242c;
+      stroke: var(--border);
+      stroke-width: 1.5px;
+      transition: all 0.3s ease;
+    }
+    .node-group:hover .node-box {
+      stroke: var(--text-muted);
+    }
+    .node-group.active .node-box {
+      fill: #1a2736;
+      stroke: var(--accent);
+      stroke-width: 2.5px;
+      filter: drop-shadow(0 0 10px var(--accent-glow));
+    }
+    .node-group.stop.active .node-box {
+      fill: #331515;
+      stroke: var(--danger);
+      filter: drop-shadow(0 0 10px rgba(248, 81, 73, 0.5));
+    }
+    .node-title {
+      font-size: 13px;
+      font-weight: 600;
+      fill: #f0f6fc;
+      pointer-events: none;
+    }
+    .node-sub {
+      font-size: 10px;
+      fill: var(--text-muted);
+      pointer-events: none;
+    }
+
+    /* エッジ */
+    .edge-path {
+      fill: none;
+      stroke: #30363d;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      transition: stroke 0.3s, stroke-width 0.3s;
+    }
+    .edge-path.back-edge {
+      stroke: var(--warning);
+      stroke-dasharray: 6, 4;
+    }
+    .edge-path.stop-edge {
+      stroke: var(--danger);
+      stroke-dasharray: 4, 3;
+    }
+    .edge-path.active-flow {
+      stroke: var(--accent);
+      stroke-width: 3;
+      stroke-dasharray: 8, 4;
+      animation: flowDash 0.8s linear infinite;
+    }
+    @keyframes flowDash {
+      to { stroke-dashoffset: -12; }
+    }
+
+    /* コントロールバー */
+    .controls-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 10px 16px;
+    }
+    button {
+      background: #21262d;
+      color: #c9d1d9;
+      border: 1px solid var(--border);
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    button:hover {
+      background: #30363d;
+      border-color: #8b949e;
+      color: #fff;
+    }
+    button.primary {
+      background: #238636;
+      border-color: rgba(240, 246, 252, 0.1);
+      color: #fff;
+    }
+    button.primary:hover { background: #2ea043; }
+    button.warn {
+      background: rgba(210, 153, 34, 0.15);
+      border-color: rgba(210, 153, 34, 0.4);
+      color: #e3b341;
+    }
+    button.warn:hover { background: rgba(210, 153, 34, 0.3); }
+    button.danger {
+      background: rgba(248, 81, 73, 0.15);
+      border-color: rgba(248, 81, 73, 0.4);
+      color: #f85149;
+    }
+    button.danger:hover { background: rgba(248, 81, 73, 0.3); }
+    button.cyan {
+      background: rgba(121, 192, 255, 0.15);
+      border-color: rgba(121, 192, 255, 0.4);
+      color: #79c0ff;
+    }
+    button.cyan:hover { background: rgba(121, 192, 255, 0.3); }
+    button.purple {
+      background: rgba(210, 168, 255, 0.15);
+      border-color: rgba(210, 168, 255, 0.4);
+      color: #d2a8ff;
+    }
+    button.purple:hover { background: rgba(210, 168, 255, 0.3); }
+    button.orange {
+      background: rgba(255, 123, 114, 0.15);
+      border-color: rgba(255, 123, 114, 0.4);
+      color: #ff7b72;
+    }
+    button.orange:hover { background: rgba(255, 123, 114, 0.3); }
+    button.green {
+      background: rgba(126, 231, 135, 0.15);
+      border-color: rgba(126, 231, 135, 0.4);
+      color: #7ee787;
+    }
+    button.green:hover { background: rgba(126, 231, 135, 0.3); }
+    .archetype-btn {
+      font-size: 11.5px;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+    .archetype-btn.active {
+      background: rgba(88, 166, 255, 0.2);
+      border-color: var(--accent);
+      color: #fff;
+      font-weight: 600;
+    }
+    .status-pill {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
+    }
+
+    /* 下部: 詳細セクション */
+    .detail-section {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 10px;
+    }
+    .detail-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #f0f6fc;
+    }
+    .detail-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+    .pkg-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .pkg-tag {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 11px;
+      background: rgba(110, 118, 129, 0.2);
+      border: 1px solid rgba(110, 118, 129, 0.3);
+      padding: 2px 8px;
+      border-radius: 4px;
+      color: #58a6ff;
+    }
+
+    /* タブ切り替えバー (統合テスト/実装コード/差分/実行ログ) */
+    .tab-bar {
+      display: flex;
+      gap: 8px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+      margin-top: 4px;
+    }
+    .tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .tab-btn:hover {
+      color: #f0f6fc;
+      background: rgba(255, 255, 255, 0.04);
+    }
+    .tab-btn.active {
+      color: var(--accent);
+      background: rgba(88, 166, 255, 0.1);
+      border-color: rgba(88, 166, 255, 0.3);
+      font-weight: 600;
+    }
+
+    /* コンテンツ表示ボックス */
+    .code-box {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 12.5px;
+      color: #e6edf3;
+      overflow-x: auto;
+      line-height: 1.45;
+      position: relative;
+      min-height: 180px;
+    }
+    .code-label {
+      position: absolute;
+      top: 8px;
+      right: 12px;
+      font-size: 10px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      letter-spacing: 0.5px;
+    }
+
+    /* Git Diff 表示スタイル */
+    .diff-line { display: block; padding: 1px 4px; border-radius: 2px; }
+    .diff-add { background: var(--success-bg); color: #7ee787; }
+    .diff-del { background: var(--danger-bg); color: #ffa198; }
+    .diff-info { color: #79c0ff; font-weight: 600; }
+
+    /* ターミナル出力スタイル */
+    .term-pass { color: var(--success); font-weight: 600; }
+    .term-fail { color: var(--danger); font-weight: 600; }
+    .term-cmd { color: var(--accent); }
+
+    /* アーキテクチャ進化図 (Before/After) カード */
+    .arch-compare-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 4px;
+    }
+    .arch-card {
+      background: #11161d;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      font-size: 12px;
+    }
+    .arch-card.before { border-left: 4px solid var(--warning); }
+    .arch-card.after { border-left: 4px solid var(--success); }
+    .arch-card h4 {
+      font-size: 12px;
+      margin-bottom: 6px;
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+    }
+    .meta-card {
+      background: rgba(255,255,255,0.02);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 12px;
+      font-size: 12px;
+    }
+    .meta-card h4 {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      letter-spacing: 0.5px;
+    }
+    .meta-card code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      background: rgba(110, 118, 129, 0.2);
+      padding: 1px 4px;
+      border-radius: 3px;
+      color: #e6edf3;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>
+      <span>⚡ Agentic State Machine</span>
+      <span class="badge">Go Architecture & Verification</span>
+    </h1>
+    <div style="font-size: 12px; color: var(--text-muted);">
+      Integration Tests • Contract Locking • Regression Ledgers • Architecture Diffs
+    </div>
+  </header>
+
+  <!-- 上部: 広い状態遷移グラフ (横幅100%でゆったり配置) -->
+  <section class="graph-section">
+    <div class="svg-container">
+      <svg viewBox="0 0 1120 380" id="graphSvg">
+        <defs>
+          <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#58a6ff" />
+          </marker>
+          <marker id="arrow-warn" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#d29922" />
+          </marker>
+          <marker id="arrow-danger" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#f85149" />
+          </marker>
+          <marker id="arrow-cyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#79c0ff" />
+          </marker>
+          <marker id="arrow-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#d2a8ff" />
+          </marker>
+          <marker id="arrow-orange" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#ff7b72" />
+          </marker>
+          <marker id="arrow-green" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#7ee787" />
+          </marker>
+          <marker id="arrow-default" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#30363d" />
+          </marker>
+        </defs>
+
+        <!-- 通常エッジ (順方向) -->
+        <path id="edge-1-2" class="edge-path" d="M 190 90 L 260 90" marker-end="url(#arrow-default)"></path>
+        <path id="edge-2-3" class="edge-path" d="M 430 90 L 500 90" marker-end="url(#arrow-default)"></path>
+        <path id="edge-3-4" class="edge-path" d="M 670 90 L 740 90" marker-end="url(#arrow-default)"></path>
+        <path id="edge-4-5" class="edge-path" d="M 910 90 L 970 90" marker-end="url(#arrow-default)"></path>
+        <path id="edge-5-6" class="edge-path" d="M 1045 130 L 1045 230 L 910 270" marker-end="url(#arrow-default)"></path>
+        <path id="edge-6-7" class="edge-path" d="M 740 270 L 670 270" marker-end="url(#arrow-default)"></path>
+
+        <!-- マルチウェイ適応エッジ (Adaptive Multi-Way Network) -->
+        <!-- 1 (Investigation) -> 3 (Test-First): 既知パス・バグ修正ショートカット -->
+        <path id="edge-1-3" class="edge-path" d="M 105 130 C 105 190, 585 190, 585 130" stroke="#79c0ff" stroke-dasharray="4, 4" marker-end="url(#arrow-cyan)"></path>
+        <text x="345" y="195" fill="#79c0ff" font-size="10" font-weight="600" text-anchor="middle">既知パス・バグ修正 (Tracerスキップ)</text>
+
+        <!-- 1 (Investigation) -> 5 (Architecture): アーキテクチャ境界調査・Drift事前評価 -->
+        <path id="edge-1-5" class="edge-path" d="M 105 50 C 105 12, 1045 12, 1045 50" stroke="#d2a8ff" stroke-dasharray="4, 4" marker-end="url(#arrow-purple)"></path>
+        <text x="585" y="14" fill="#d2a8ff" font-size="10" font-weight="600" text-anchor="middle">大規模リファクタ・アーキテクチャ調査先行</text>
+
+        <!-- 5 (Architecture) -> 2 (Tracer Bullet): 技術選定・ADRスパイク検証 -->
+        <path id="edge-5-2" class="edge-path" d="M 970 70 C 700 30, 450 30, 430 70" stroke="#ff7b72" stroke-dasharray="4, 3" marker-end="url(#arrow-orange)"></path>
+
+        <!-- 4 (Review) -> 2 (Tracer Bullet): 欠陥発見差し戻し (Back Edge) -->
+        <path id="edge-back" class="edge-path back-edge" d="M 825 50 C 825 24, 345 24, 345 50" marker-end="url(#arrow-warn)"></path>
+
+        <!-- 4 (Review) -> 6 (Dead Code): 不要コード即時刈り取り -->
+        <path id="edge-4-6" class="edge-path" d="M 825 130 L 825 230" stroke="#7ee787" stroke-dasharray="3, 3" marker-end="url(#arrow-green)"></path>
+
+        <!-- ガードレール停止エッジ: 5 (Architecture) -> STOP -->
+        <path id="edge-stop" class="edge-path stop-edge" d="M 1045 130 L 1045 180" marker-end="url(#arrow-danger)"></path>
+
+        <!-- ノード群 -->
+        <g id="node-investigation" class="node-group" onclick="selectNode('investigation')" transform="translate(20, 50)">
+          <rect class="node-box" width="170" height="80"></rect>
+          <text class="node-title" x="14" y="32">1. investigation</text>
+          <text class="node-sub" x="14" y="52">課題・事実調査</text>
+          <text class="node-sub" x="14" y="68">Go AST / log/slog 解析</text>
+        </g>
+
+        <g id="node-tracer_bullet" class="node-group" onclick="selectNode('tracer_bullet')" transform="translate(260, 50)">
+          <rect class="node-box" width="170" height="80"></rect>
+          <text class="node-title" x="14" y="32">2. tracer_bullet</text>
+          <text class="node-sub" x="14" y="52">最小E2E開通 & 契約固定</text>
+          <text class="node-sub" x="14" y="68">単一ファイル直書き (app.Run)</text>
+        </g>
+
+        <g id="node-test_first" class="node-group" onclick="selectNode('test_first')" transform="translate(500, 50)">
+          <rect class="node-box" width="170" height="80"></rect>
+          <text class="node-title" x="14" y="32">3. test_first</text>
+          <text class="node-sub" x="14" y="52">パッケージ分割 & PBT</text>
+          <text class="node-sub" x="14" y="68">複数パッケージ横断CLIテスト</text>
+        </g>
+
+        <g id="node-review" class="node-group" onclick="selectNode('review')" transform="translate(740, 50)">
+          <rect class="node-box" width="170" height="80"></rect>
+          <text class="node-title" x="14" y="32">4. review</text>
+          <text class="node-sub" x="14" y="52">並行性・静的解析</text>
+          <text class="node-sub" x="14" y="68">go test -race / staticcheck</text>
+        </g>
+
+        <g id="node-architecture" class="node-group" onclick="selectNode('architecture')" transform="translate(970, 50)">
+          <rect class="node-box" width="150" height="80"></rect>
+          <text class="node-title" x="14" y="32">5. architecture</text>
+          <text class="node-sub" x="14" y="52">Drift 判定 & ガバナンス</text>
+          <text class="node-sub" x="14" y="68">単方向依存・循環参照防止</text>
+        </g>
+
+        <g id="node-stop" class="node-group stop" onclick="selectNode('stop')" transform="translate(970, 180)">
+          <rect class="node-box" width="150" height="60"></rect>
+          <text class="node-title" x="14" y="28" fill="#f85149">⛔ [STOP] ADR提案</text>
+          <text class="node-sub" x="14" y="46">STRUCTURAL_ADJUST</text>
+        </g>
+
+        <g id="node-dead_code_cleanup" class="node-group" onclick="selectNode('dead_code_cleanup')" transform="translate(740, 230)">
+          <rect class="node-box" width="170" height="80"></rect>
+          <text class="node-title" x="14" y="32">6. dead_code_cleanup</text>
+          <text class="node-sub" x="14" y="52">デッドコード刈り取り</text>
+          <text class="node-sub" x="14" y="68">deadcode / unused 削除</text>
+        </g>
+
+        <g id="node-pre_commit_leak_review" class="node-group" onclick="selectNode('pre_commit_leak_review')" transform="translate(500, 230)">
+          <rect class="node-box" width="170" height="80"></rect>
+          <text class="node-title" x="14" y="32">7. pre_commit_leak</text>
+          <text class="node-sub" x="14" y="52">コミット前リーク検査</text>
+          <text class="node-sub" x="14" y="68">秘密情報・環境依存走査</text>
+        </g>
+      </svg>
+    </div>
+  </section>
+
+  <!-- 中間: 操作コントロールバー (適応型マルチウェイルーティング) -->
+  <section class="controls-bar" style="flex-direction: column; align-items: stretch; gap: 10px;">
+    <!-- 1行目: タスク種別シナリオ (Archetypes) -->
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+      <span style="font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
+        🎯 タスク開始シナリオ:
+      </span>
+      <button class="archetype-btn active" id="scen-full" onclick="setScenario('full')">🚀 新機能・不確実性大 (Full Loop: 1→2→3→4→5→6→7)</button>
+      <button class="archetype-btn" id="scen-bugfix" onclick="setScenario('bugfix')">🐛 既知バグ・テスト拡充 (Short Path: 1→3→4)</button>
+      <button class="archetype-btn" id="scen-spike" onclick="setScenario('spike')">🏛️ 設計検証・Spike (1→5→2→4)</button>
+      <button class="archetype-btn" id="scen-audit" onclick="setScenario('audit')">🔍 監査・リファクタ (1→4→6)</button>
+    </div>
+
+    <!-- 2行目: 現在の状態からの動的遷移先 -->
+    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--border); padding-top: 8px;">
+      <div class="status-pill" style="margin-left: 0; margin-right: 8px;">
+        <span class="status-dot"></span>
+        <span>現在地: <strong id="lblCurrent" style="color: #58a6ff;">investigation</strong></span>
+      </div>
+      <span style="font-size: 11px; color: var(--text-muted);">👉 遷移可能な次のアクション:</span>
+      <div id="dynamicNextButtons" style="display: flex; gap: 6px; flex-wrap: wrap;">
+        <!-- JSで動的生成 -->
+      </div>
+      <button id="btnReset" style="margin-left: auto;" onclick="resetMachine()">↺ リセット</button>
+    </div>
+  </section>
+
+  <!-- 下部: 詳細・コード・テスト・Diffインスペクタ -->
+  <section class="detail-section">
+    <div class="detail-header">
+      <div>
+        <div class="detail-title" id="dTitle">2. tracer_bullet (最小E2E開通 & 契約固定)</div>
+        <div class="detail-desc" id="dDesc">外部契約 (CLI/API) をインプロセス結合テストで先行固定し、最小の貫通パスを実装する。</div>
+      </div>
+      <div id="dBadges" class="pkg-badges">
+        <span class="pkg-tag">testing</span>
+        <span class="pkg-tag">bytes</span>
+        <span class="pkg-tag">app.Run</span>
+      </div>
+    </div>
+
+    <!-- サブタブ切り替えバー -->
+    <div class="tab-bar" id="subTabBar">
+      <!-- JSで動的生成 -->
+    </div>
+
+    <!-- コンテンツ表示エリア (コード / Diff / 実行結果 / アーキテクチャ比較) -->
+    <div id="contentContainer">
+      <!-- JSで動的生成 -->
+    </div>
+
+    <!-- メタ情報カード (検証コマンド & ガードレール) -->
+    <div class="meta-grid">
+      <div class="meta-card">
+        <h4>必須検証コマンド (Verify)</h4>
+        <div id="dVerify"><code>go test -run TestCLI_TracerBullet -v</code></div>
+      </div>
+      <div class="meta-card">
+        <h4>アーキテクチャ制約 (Guardrail)</h4>
+        <div id="dGuard">過度な共通化やレイヤ分割を禁止。最小の技術パスを素通しする。</div>
+      </div>
+      <div class="meta-card">
+        <h4>推奨パッケージ (Go Packages)</h4>
+        <div id="dPkgs"><code>testing</code>, <code>bytes</code>, <code>strings</code>, <code>log/slog</code></div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    const STATE_DATA = {
+      investigation: {
+        title: "1. investigation (課題・事実調査 & 現行境界特定)",
+        desc: "推測でのコード変更を厳禁。AST・ログ・依存関係を収集して事実と仮説を分離する。",
+        badges: ["log/slog", "go/parser", "golang.org/x/tools/go/packages"],
+        verify: "go vet ./... && go list -json ./...",
+        guard: "ファイルの書き換えを禁止。観察可能な境界と入出力を確定する。",
+        pkgs: "log/slog, go/ast, go/parser",
+        tabs: [
+          {
+            id: "ast_inspect",
+            name: "🔍 AST・契約境界走査",
+            type: "code",
+            label: "Go AST Scanner",
+            content: `// Investigation: AST走査による公開シンボルとシグネチャの事実確定
+package main
+
+import (
+    "context"
+    "go/parser"
+    "go/token"
+    "log/slog"
+    "os"
+)
+
+func InspectPublicAPI(filePath string) error {
+    fset := token.NewFileSet()
+    node, err := parser.ParseFile(fset, filePath, nil, parser.AllErrors)
+    if err != nil { return err }
+
+    logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+    logger.Info("fact gathered: parsed AST",
+        slog.String("package", node.Name.Name),
+        slog.Int("decls", len(node.Decls)),
+    )
+    return nil
+}`
+          },
+          {
+            id: "fact_hypothesis",
+            name: "📋 事実と仮説の整理",
+            type: "code",
+            label: "Investigation Markdown Output",
+            content: `# 調査事実と仮説 (Fact vs. Hypothesis)
+
+## 確定した事実 (Observed Facts)
+1. CLIコマンド 'convert' は標準入力からJSONを受け取り、パース結果を返す契約。
+2. 現行のコードベースには --format フラグのパース処理が存在しない。
+3. Domain層は外部パッケージに依存しておらず、単方向依存が保たれている。
+
+## 検証すべき仮説 (Hypothesis)
+- フラグパースを cmd/app に追加し、Domainの Converter を呼ぶだけで最小E2Eが通る。
+
+## 未知変数 (Unknowns)
+- 巨大JSONパース時のメモリ制約（ストリーム処理が必要か否か）。`
+          }
+        ]
+      },
+      tracer_bullet: {
+        title: "2. tracer_bullet (契約先行ロック & 単一ファイル直書き最小開通)",
+        desc: "外部契約 (CLI/API) をインプロセス結合テストで先行固定。初期のパッケージ分割をあえて行わず、1ファイル（cmd/app/app.go）で最短開通させる。",
+        badges: ["testing", "bytes", "io", "app.Run", "単一ファイル直書き"],
+        verify: "go test -run TestCLI_TracerBullet_ContractLock -v",
+        guard: "過度な共通化やレイヤ分割を禁止。最小の技術パスを素通しする。",
+        pkgs: "testing, bytes, strings, myapp/cmd/app",
+        tabs: [
+          {
+            id: "contract_test",
+            name: "🔒 統合テストコード (契約ロック)",
+            type: "code",
+            label: "tests/integration/cli_contract_test.go",
+            content: `// 統合テストコード: CLI外部契約を app.Run でインプロセス先行ロック
+package cli_test
+
+import (
+    "bytes"
+    "encoding/json"
+    "strings"
+    "testing"
+    "myapp/cmd/app"
+)
+
+func TestCLI_TracerBullet_ContractLock(t *testing.T) {
+    var stdout, stderr bytes.Buffer
+    stdin := strings.NewReader(\`{"payload":"sample data"}\`)
+
+    // 1. 外部契約の先行ロック (引数、入出力、終了コード)
+    exitCode := app.Run([]string{"myapp", "convert", "--format=json"}, stdin, &stdout, &stderr)
+
+    // 2. 終了コードの契約検証
+    if exitCode != 0 {
+        t.Fatalf("contract breach: expected exit 0, got %d. stderr: %s", exitCode, stderr.String())
+    }
+
+    // 3. 出力スキーマ契約の厳格検証 (回帰防止)
+    var resp map[string]any
+    if err := json.Unmarshal(stdout.Bytes(), &resp); err != nil {
+        t.Fatalf("contract breach: stdout is not valid JSON: %v", err)
+    }
+    if resp["status"] != "ok" {
+        t.Errorf("contract breach: expected status 'ok', got '%v'", resp["status"])
+    }
+}`
+          },
+          {
+            id: "minimal_impl",
+            name: "⚡ 単一ファイル最小実装 (直書きモノリス)",
+            type: "code",
+            label: "cmd/app/app.go (1ファイル完結)",
+            content: `// 最小実装コード: 最初はパッケージ分割をせず、1ファイル内に全てを直書きして最短開通
+// 💡 Tracer Bullet の鉄則: 早すぎる抽象化やレイヤ分離を避け、最小の動くパスを作る
+package app
+
+import (
+    "encoding/json"
+    "io"
+)
+
+type Response struct {
+    Status string \`json:"status"\`
+    Result string \`json:"result"\`
+}
+
+// Run: インプロセスで実行可能なエントリーポイント (入出力を直結)
+func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
+    // パッケージ分割は次の 'test_first' で実施。ここでは最短で契約テストを通す
+    resp := Response{
+        Status: "ok",
+        Result: "tracer_bullet_connected",
+    }
+    if err := json.NewEncoder(stdout).Encode(resp); err != nil {
+        io.WriteString(stderr, err.Error() + "\\n")
+        return 1
+    }
+    return 0
+}`
+          },
+          {
+            id: "test_run",
+            name: "🧪 統合テスト実行 (最小開通ログ)",
+            type: "terminal",
+            label: "Terminal Execution Log",
+            content: `<span class="term-cmd">$ go test -v ./tests/integration/... -run TestCLI_TracerBullet</span>
+=== RUN   TestCLI_TracerBullet_ContractLock
+=== CLI Contract Encompassed Packages ===
+myapp/cmd/app.go (単一パッケージ直書き)
+tests/integration/cli_contract_test.go
+--- <span class="term-pass">PASS</span>: TestCLI_TracerBullet_ContractLock (0.002s)
+    cli_contract_test.go:21: contract locked: exit_code=0, payload validated
+<span class="term-pass">PASS</span>
+ok      myapp/tests/integration 0.018s`
+          }
+        ]
+      },
+      test_first: {
+        title: "3. test_first (パッケージ分割 & 複数パッケージ横断CLI統合テスト)",
+        desc: "直書きコードを責務別にパッケージ分割（cmd → domain → adapter）。複数パッケージを跨ぐCLI統合テストで全体の契約を保護する。",
+        badges: ["cmd/app", "internal/domain", "internal/adapter", "Cross-Package CLI", "rapid PBT"],
+        verify: "go test -tags=rapid -race ./... -v",
+        guard: "複数パッケージへ分割後も、最上位のCLI統合契約テストが100%パスし続けること。",
+        pkgs: "myapp/cmd/app, myapp/internal/domain, myapp/internal/adapter, rapid",
+        tabs: [
+          {
+            id: "pkg_architecture",
+            name: "📦 パッケージ分割設計 (cmd → domain → adapter)",
+            type: "code",
+            label: "Package Tree & Architecture Responsibilities",
+            content: `// パッケージ分割リファクタリング: 責務に応じたディレクトリ構造への進化
+myapp/
+├── cmd/app/
+│   └── app.go                   # [CLI層]: フラグ解析・I/Oストリーム受渡・ワイヤリング
+├── internal/domain/
+│   ├── converter.go             # [Domain層]: 純粋な変換・サニタイズ・検証 (外部非依存)
+│   └── invariants_test.go       # [Domain PBT]: rapid による境界値不変条件テスト
+├── internal/adapter/
+│   └── json_formatter.go        # [Adapter層]: 外部契約向けのJSONエンコード・メタデータ付与
+└── tests/integration/
+    └── cli_multi_pkg_test.go    # [結合テスト]: CLIエントリーから全パッケージを横断検証`
+          },
+          {
+            id: "multi_pkg_cli_test",
+            name: "🌐 複数パッケージ横断 CLI 統合テスト",
+            type: "code",
+            label: "tests/integration/cli_multi_pkg_test.go",
+            content: `// 複数パッケージ (cmd/app -> internal/domain -> internal/adapter) を
+// 最上位の CLI エントリーポイント経由で一貫して検証する統合契約テスト
+package integration_test
+
+import (
+    "bytes"
+    "encoding/json"
+    "strings"
+    "testing"
+    "myapp/cmd/app"
+)
+
+func TestCLI_MultiPackage_FullPipeline(t *testing.T) {
+    var stdout, stderr bytes.Buffer
+    stdin := strings.NewReader(\`{"raw_identifier": "antigravity_core"}\`)
+
+    // CLI実行: cmd/app (フラグ解析) -> domain (サニタイズ) -> adapter (JSON整形)
+    exitCode := app.Run([]string{"myapp", "convert", "--format=json", "--uppercase=true"}, stdin, &stdout, &stderr)
+
+    // 1. 終了コードの契約検証
+    if exitCode != 0 {
+        t.Fatalf("multi-package pipeline failed: exit=%d, stderr=%s", exitCode, stderr.String())
+    }
+
+    var res map[string]any
+    if err := json.Unmarshal(stdout.Bytes(), &res); err != nil {
+        t.Fatalf("adapter output is not valid JSON: %v", err)
+    }
+
+    // 2. internal/domain パッケージの処理結果が正しく反映されているかをCLI境界で検証
+    if res["sanitized"] != "ANTIGRAVITY_CORE" {
+        t.Errorf("domain package failed: expected 'ANTIGRAVITY_CORE', got '%v'", res["sanitized"])
+    }
+
+    // 3. internal/adapter パッケージの整形フォーマットが反映されているかを検証
+    if res["schema_version"] != "v1" {
+        t.Errorf("adapter package failed: expected schema 'v1', got '%v'", res["schema_version"])
+    }
+}`
+          },
+          {
+            id: "pbt_invariants",
+            name: "📊 PBT不変条件テスト (Domain単体: rapid)",
+            type: "code",
+            label: "internal/domain/invariants_test.go",
+            content: `// Property-Based Testing: 分離された domain パッケージの不変条件を保護
+package domain_test
+
+import (
+    "testing"
+    "pgregory.net/rapid"
+    "myapp/internal/domain"
+)
+
+func TestProperty_EncoderDecoderRoundtrip(t *testing.T) {
+    rapid.Check(t, func(t *rapid.T) {
+        // 任意の境界値（空文字、制御コード、256文字長）を生成
+        orig := rapid.StringMatching("^[a-zA-Z0-9_./-]{0,256}$").Draw(t, "orig")
+
+        encoded := domain.Encode(orig)
+        decoded, err := domain.Decode(encoded)
+
+        // 不変条件: どのような文字列でも Decode(Encode(x)) == x
+        if err != nil {
+            t.Fatalf("decode failed: %v", err)
+        }
+        if decoded != orig {
+            t.Fatalf("INVARIANT BREACH: orig=%q, got=%q", orig, decoded)
+        }
+    })
+}`
+          },
+          {
+            id: "multi_pkg_run_log",
+            name: "🏃 複数パッケージ統合テスト実行ログ",
+            type: "terminal",
+            label: "Terminal Multi-Package Test Ledger",
+            content: `<span class="term-cmd">$ go test -v ./tests/integration/...</span>
+<span class="diff-info">=== CLI Contract Encompassed Packages ===</span>
+• <span style="color: #79c0ff;">myapp/cmd/app</span>          (CLI Flags & Routing)
+• <span style="color: #7ee787;">myapp/internal/domain</span>  (Business Rules & rapid Invariants)
+• <span style="color: #e3b341;">myapp/internal/adapter</span> (JSON Serialization & Output)
+• <span style="color: #d2a8ff;">myapp/tests/integration</span>(Full Pipeline Contract Runner)
+
+=== RUN   TestCLI_MultiPackage_FullPipeline
+    cli_multi_pkg_test.go:24: [cmd/app] parsed flags: --format=json --uppercase=true
+    cli_multi_pkg_test.go:30: [domain] sanitized payload to 'ANTIGRAVITY_CORE'
+    cli_multi_pkg_test.go:36: [adapter] encoded response with schema 'v1'
+--- <span class="term-pass">PASS</span>: TestCLI_MultiPackage_FullPipeline (0.004s)
+
+=== RUN   TestCLI_MultiPackage_DomainValidationFailure
+--- <span class="term-pass">PASS</span>: TestCLI_MultiPackage_DomainValidationFailure (0.001s)
+
+<span class="term-pass">PASS: 2 multi-package integration tests passed in 0.026s (0 failures)</span>
+<span style="color: #3fb950; font-weight: bold;">[CONTRACT MAINTAINED ACROSS ALL PACKAGES]</span>
+単一ファイルから3パッケージに分割後も、最上位CLI統合テストで全結合が保証されています。`
+          }
+        ]
+      },
+      review: {
+        title: "4. review (並行性・静的解析・差し戻し Back Edge)",
+        desc: "go test -race による競合検査、staticcheck、変更波及範囲を評価。欠陥時は Tracer へ差し戻す。",
+        badges: ["go test -race", "staticcheck", "sync", "Back Edge"],
+        verify: "go test -race ./... && staticcheck ./...",
+        guard: "欠陥発見時は場当たりパッチを禁止し、tracer_bullet へ差し戻す。",
+        pkgs: "sync, context, golang.org/x/sync/errgroup",
+        tabs: [
+          {
+            id: "race_test",
+            name: "⚡ 並行性競合テスト (-race)",
+            type: "code",
+            label: "internal/worker/worker_test.go",
+            content: `// 並行アクセス時のデータ競合を検出するテスト
+func TestWorkerPool_ConcurrencySafety(t *testing.T) {
+    pool := worker.NewPool(8)
+    var wg sync.WaitGroup
+
+    for i := 0; i < 100; i++ {
+        wg.Add(1)
+        go func(val int) {
+            defer wg.Done()
+            // 競合状態（Race Condition）があれば go test -race で即座に FAIL
+            _ = pool.Process(val)
+        }(i)
+    }
+    wg.Wait()
+}`
+          },
+          {
+            id: "defect_found",
+            name: "↩ 欠陥発見時の差し戻し (Back Edge)",
+            type: "terminal",
+            label: "Race Detector Output",
+            content: `<span class="term-cmd">$ go test -race ./internal/worker/...</span>
+==================
+<span class="term-fail">WARNING: DATA RACE</span>
+Write at 0x00c0000a4080 by goroutine 7:
+  myapp/internal/worker.(*Pool).Process()
+      /Users/yuta/dev/myapp/internal/worker/pool.go:42 +0x64
+==================
+--- <span class="term-fail">FAIL</span>: TestWorkerPool_ConcurrencySafety (0.012s)
+<span class="term-fail">FAIL</span>
+
+<span style="color: #d29922; font-weight: bold;">[BACK EDGE TRIGGERED]</span>
+場当たり的な修正を中止し、tracer_bullet の契約テスト（スレッドセーフ契約）へ差し戻します。`
+          }
+        ]
+      },
+      architecture: {
+        title: "5. architecture (ガバナンス & アーキテクチャ進化差分)",
+        desc: "単方向依存 (CLI → Domain → Adapter) と循環参照の有無を判定。進化差分を可視化する。",
+        badges: ["golang.org/x/tools/go/packages", "ADR", "Clean Architecture"],
+        verify: "go run ./tools/cli_linter/lint_cli.py && go vet ./...",
+        guard: "STRUCTURAL_ADJUST (境界違反) は即座に STOP し、ADR を人間に提案する。",
+        pkgs: "golang.org/x/tools/go/packages",
+        tabs: [
+          {
+            id: "arch_evolution",
+            name: "📐 アーキテクチャ進化差分 (Before / After)",
+            type: "arch_diff",
+            label: "Architecture Evolution Visualizer"
+          },
+          {
+            id: "arch_test_code",
+            name: "🛡️ 依存方向自動検証テスト",
+            type: "code",
+            label: "tests/architecture/arch_test.go",
+            content: `// アーキテクチャ境界テスト: Domain 層からの逆流依存を静的に防止
+package arch_test
+
+import (
+    "strings"
+    "testing"
+    "golang.org/x/tools/go/packages"
+)
+
+func TestArchitecture_DomainHasNoExternalDependencies(t *testing.T) {
+    cfg := &packages.Config{Mode: packages.NeedImports | packages.NeedName}
+    pkgs, err := packages.Load(cfg, "myapp/internal/domain/...")
+    if err != nil { t.Fatal(err) }
+
+    for _, pkg := range pkgs {
+        for imported := range pkg.Imports {
+            // Domain 層から Adapter や CLI への依存は STRUCTURAL_ADJUST としてブロック
+            if strings.Contains(imported, "myapp/internal/adapter") ||
+               strings.Contains(imported, "myapp/cmd") {
+                t.Fatalf("BOUNDARY BREACH: domain package %s directly imports %s", pkg.PkgPath, imported)
+            }
+        }
+    }
+}`
+          }
+        ]
+      },
+      stop: {
+        title: "⛔ [STOP] ガードレール発動 (人間への ADR 提案)",
+        desc: "既存のアーキテクチャ境界を破る変更を検知。コード実装を中断し、意思決定レコードを作成する。",
+        badges: ["ADR-00X", "HUMAN_DECISION", "GUARDRAIL_HALT"],
+        verify: "git diff && cat .agent/adr/ADR-PROPOSED.md",
+        guard: "人間の明示的合意なしに外部破壊的変更を進めることを禁止する。",
+        pkgs: "ADR, Markdown, Human Review",
+        tabs: [
+          {
+            id: "adr_doc",
+            name: "📜 ADR 提案書 (Architecture Decision Record)",
+            type: "code",
+            label: ".agent/adr/ADR-003-CACHE-ADAPTER-EXTRACTION.md",
+            content: `# ADR-003: Redisキャッシュ導入に伴うRepositoryインターフェース分離
+
+## 状態: PROPOSED (人間の承認待ち / STOP発動中)
+
+### コンテキスト:
+- パフォーマンス向上のため Redis キャッシュが必要となった。
+- Domain層から直接 Redisクライアントを呼ぶと、単方向依存「CLI → Domain → Adapter」に違反する。
+
+### 提案する解決策:
+1. (推奨) Domain層に「CacheRepository」ポート(interface)を定義し、Adapter層でRedis実装をDIする。
+2. Domain層とキャッシュ層を完全に独立したサブシステムに分割する。
+
+### 決定待ち:
+人間オペレーターが選択肢を承認するまで、エージェントはコード変更を行いません。`
+          }
+        ]
+      },
+      dead_code_cleanup: {
+        title: "6. dead_code_cleanup (ソースコード掃除Diff & 回帰テスト証明)",
+        desc: "実装が安定した後、不要になった関数・重複ロジック・過剰な抽象化ラッパーを安全に刈り取る。",
+        badges: ["deadcode", "git diff", "Zero-Regression"],
+        verify: "deadcode ./... && go test ./... (全件PASS)",
+        guard: "DELETE / MERGE / INLINE / SIMPLIFY を適用し、既存のテスト契約を 100% 維持する。",
+        pkgs: "golang.org/x/tools/cmd/deadcode",
+        tabs: [
+          {
+            id: "cleanup_diff",
+            name: "✂️ ソースコード刈り取りDiff (Git Diff)",
+            type: "diff",
+            label: "git diff -U3 internal/service/converter.go",
+            content: `<span class="diff-info">diff --git a/internal/service/converter.go b/internal/service/converter.go</span>
+<span class="diff-info">--- a/internal/service/converter.go</span>
+<span class="diff-info">+++ b/internal/service/converter.go</span>
+<span class="diff-info">@@ -32,22 +32,8 @@ func (s *Service) Convert(ctx context.Context, payload []byte) ([]byte, error) {</span>
+     if len(payload) == 0 {
+         return nil, ErrEmptyPayload
+     }
+<span class="diff-del">-    // [DEAD CODE DELETE]: 初期プロトタイプ用の一時的なフォールバックラッパー</span>
+<span class="diff-del">-    res := s.legacyDeprecatedFallbackWrapper(payload)</span>
+<span class="diff-del">-    return res, nil</span>
+<span class="diff-del">-}</span>
+<span class="diff-del">-</span>
+<span class="diff-del">-// [DEAD CODE DELETE]: 参照がゼロとなった不要なヘルパー関数</span>
+<span class="diff-del">-func (s *Service) legacyDeprecatedFallbackWrapper(data []byte) []byte {</span>
+<span class="diff-del">-    slog.Debug("legacy wrapper invoked")</span>
+<span class="diff-del">-    return data</span>
+<span class="diff-add">+    // [SIMPLIFY / INLINE]: 中間ラッパーを廃止し直接ドメインモデルへ委譲</span>
+<span class="diff-add">+    return s.domainConverter.Transform(ctx, payload)</span>
+ }`
+          },
+          {
+            id: "regression_proof",
+            name: "🛡️ 回帰テスト通過証明 (ゼロ欠損)",
+            type: "terminal",
+            label: "Terminal Regression Ledger",
+            content: `<span class="term-cmd">$ deadcode ./... && go test ./... -v</span>
+[deadcode] 0 unreachable symbols detected (clean).
+
+=== RUN   TestCLI_TracerBullet_ContractLock
+--- <span class="term-pass">PASS</span>: TestCLI_TracerBullet_ContractLock (0.002s)
+=== RUN   TestProperty_EncoderDecoderRoundtrip
+--- <span class="term-pass">PASS</span>: TestProperty_EncoderDecoderRoundtrip (0.031s)
+=== RUN   TestScenario_InvalidJSONPayloadReturns400Equivalent
+--- <span class="term-pass">PASS</span>: TestScenario_InvalidJSONPayloadReturns400Equivalent (0.001s)
+=== RUN   TestArchitecture_DomainHasNoExternalDependencies
+--- <span class="term-pass">PASS</span>: TestArchitecture_DomainHasNoExternalDependencies (0.015s)
+
+<span class="term-pass">PASS: 8 tests passed in 0.049s (0 failures)</span>
+<span style="color: #3fb950; font-weight: bold;">[ZERO REGRESSION GUARANTEED]</span> コード削除後も統合契約テストが完全保護されています。`
+          }
+        ]
+      },
+      pre_commit_leak_review: {
+        title: "7. pre_commit_leak_review (コミット前リーク検査)",
+        desc: "git diff を走査し、秘密鍵、APIトークン、ローカル絶対パス、内部機密の混入をブロックする。",
+        badges: ["git diff --staged", "gitleaks", "pre-commit"],
+        verify: "git diff --staged && go test ./tests/integration/...",
+        guard: "ローカル環境の絶対パスや認証情報の漏洩がないことをコミット直前に保証する。",
+        pkgs: "regexp, os/exec, gitleaks",
+        tabs: [
+          {
+            id: "leak_scan_script",
+            name: "🔍 ステージング漏洩検査スクリプト",
+            type: "code",
+            label: "tools/pre_commit_leak_check.go",
+            content: `// コミット前リーク検査: ステージングされた差分を走査
+package main
+
+import (
+    "fmt"
+    "os"
+    "os/exec"
+    "regexp"
+)
+
+var sensitivePatterns = []*regexp.Regexp{
+    regexp.MustCompile("(?i)(api[_-]?key|secret|token|password)\\\\s*[:=]\\\\s*['\\"][0-9a-zA-Z]{16,}['\\"]"),
+    regexp.MustCompile("/Users/[a-zA-Z0-9_-]+/"), // ローカル絶対パス
+}
+
+func main() {
+    out, _ := exec.Command("git", "diff", "--cached").Output()
+    for _, pattern := range sensitivePatterns {
+        if pattern.Match(out) {
+            fmt.Fprintf(os.Stderr, "⛔ PRE-COMMIT LEAK DETECTED: Sensitive pattern matched\\n")
+            os.Exit(1)
+        }
+    }
+    fmt.Println("✅ Leak inspection passed. Ready for commit.")
+}`
+          },
+          {
+            id: "leak_verify_run",
+            name: "🛡️ コミット前最終検査ログ",
+            type: "terminal",
+            label: "Terminal Pre-Commit Check",
+            content: `<span class="term-cmd">$ go run ./tools/pre_commit_leak_check.go && git status -s</span>
+✅ No secrets, local paths, or tokens found in staged diff.
+✅ All 8 integration tests passing (0.049s).
+
+M  cmd/app/app.go
+M  internal/service/converter.go
+A  tests/integration/cli_contract_test.go
+
+<span class="term-pass">[READY FOR COMMIT]</span> コミット準備が完了しました。`
+          }
+        ]
+      }
+    };
+
+    const SEQUENCE = [
+      "investigation",
+      "tracer_bullet",
+      "test_first",
+      "review",
+      "architecture",
+      "dead_code_cleanup",
+      "pre_commit_leak_review"
+    ];
+
+    let currentIndex = 0;
+    let currentKey = "tracer_bullet";
+    let currentTabId = "";
+
+    function updateUI(key) {
+      currentKey = key;
+      document.getElementById("lblCurrent").textContent = key;
+
+      // ノード選択スタイル更新
+      document.querySelectorAll(".node-group").forEach(el => el.classList.remove("active"));
+      const activeEl = document.getElementById("node-" + key);
+      if (activeEl) activeEl.classList.add("active");
+
+      // エッジアニメーション更新
+      document.querySelectorAll(".edge-path").forEach(el => el.classList.remove("active-flow"));
+      if (key === "tracer_bullet") {
+        document.getElementById("edge-1-2").classList.add("active-flow");
+      } else if (key === "test_first") {
+        document.getElementById("edge-2-3").classList.add("active-flow");
+      } else if (key === "review") {
+        document.getElementById("edge-3-4").classList.add("active-flow");
+      } else if (key === "architecture") {
+        document.getElementById("edge-4-5").classList.add("active-flow");
+      } else if (key === "dead_code_cleanup") {
+        document.getElementById("edge-5-6").classList.add("active-flow");
+      } else if (key === "pre_commit_leak_review") {
+        document.getElementById("edge-6-7").classList.add("active-flow");
+      } else if (key === "stop") {
+        document.getElementById("edge-stop").classList.add("active-flow");
+      }
+
+      // 詳細ヘッダー更新
+      const data = STATE_DATA[key] || STATE_DATA["tracer_bullet"];
+      document.getElementById("dTitle").textContent = data.title;
+      document.getElementById("dDesc").textContent = data.desc;
+      document.getElementById("dVerify").innerHTML = "<code>" + data.verify + "</code>";
+      document.getElementById("dGuard").textContent = data.guard;
+      document.getElementById("dPkgs").innerHTML = "<code>" + data.pkgs + "</code>";
+
+      // バッジ更新
+      const bContainer = document.getElementById("dBadges");
+      bContainer.innerHTML = "";
+      data.badges.forEach(b => {
+        const span = document.createElement("span");
+        span.className = "pkg-tag";
+        span.textContent = b;
+        bContainer.appendChild(span);
+      });
+
+      // サブタブ生成
+      const tabBar = document.getElementById("subTabBar");
+      tabBar.innerHTML = "";
+      if (data.tabs && data.tabs.length > 0) {
+        currentTabId = data.tabs[0].id;
+        data.tabs.forEach((tab, index) => {
+          const btn = document.createElement("button");
+          btn.className = "tab-btn" + (index === 0 ? " active" : "");
+          btn.textContent = tab.name;
+          btn.onclick = () => switchTab(tab.id);
+          tabBar.appendChild(btn);
+        });
+        renderTabContent(data.tabs[0]);
+      }
+    }
+
+    function switchTab(tabId) {
+      currentTabId = tabId;
+      const data = STATE_DATA[currentKey];
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.textContent.includes(data.tabs.find(t => t.id === tabId).name));
+      });
+      const selected = data.tabs.find(t => t.id === tabId);
+      if (selected) renderTabContent(selected);
+    }
+
+    function renderTabContent(tab) {
+      const container = document.getElementById("contentContainer");
+      container.innerHTML = "";
+
+      if (tab.type === "arch_diff") {
+        // アーキテクチャ進化差分図 (Before / After)
+        container.innerHTML = `
+          <div class="arch-compare-container">
+            <div class="arch-card before">
+              <h4><span>⚠️ 初期アーキテクチャ (Before: 結合・Driftリスク)</span></h4>
+              <div style="margin-top: 8px; font-family: monospace; line-height: 1.6; color: #ffa198;">
+                [ CLI / UI ]<br>
+                &nbsp;&nbsp;│<br>
+                &nbsp;&nbsp;▼ (直接呼出)<br>
+                [ Domain 層 ] ──(密結合・逆流)──▶ [ 外部 Redis / DB ]
+              </div>
+              <p style="margin-top: 8px; color: var(--text-muted); font-size: 11px;">
+                問題点: Domain層が外部インフラに直接依存し、単方向原則違反（STRUCTURAL_ADJUST の原因）。
+              </p>
+            </div>
+            <div class="arch-card after">
+              <h4><span>✅ 進化したアーキテクチャ (After: 契約保護・依存性逆転)</span></h4>
+              <div style="margin-top: 8px; font-family: monospace; line-height: 1.6; color: #7ee787;">
+                [ CLI / UI ]<br>
+                &nbsp;&nbsp;│<br>
+                &nbsp;&nbsp;▼ (インプロセス契約)<br>
+                [ Domain 層 (Port: Repository Interface) ]<br>
+                &nbsp;&nbsp;▲<br>
+                &nbsp;&nbsp;│ (依存性逆転 DI)<br>
+                [ Adapter 層 (Redis / Postgres 実装) ]
+              </div>
+              <p style="margin-top: 8px; color: var(--text-muted); font-size: 11px;">
+                進化ポイント: Interface Inversion により、Domain 層の不変条件と単方向依存を完全保護。
+              </p>
+            </div>
+          </div>
+        `;
+      } else {
+        // コード / ターミナル / Diff 表示
+        const box = document.createElement("div");
+        box.className = "code-box";
+        box.innerHTML = `<span class="code-label">${tab.label}</span><pre>${tab.content}</pre>`;
+        container.appendChild(box);
+      }
+    }
+
+    const TRANSITIONS = {
+      investigation: [
+        { target: "tracer_bullet", label: "→ 2. tracer_bullet (不確実性大・最小開通)", edge: "edge-1-2", style: "primary" },
+        { target: "test_first", label: "→ 3. test_first (既知パス・バグ修正)", edge: "edge-1-3", style: "cyan" },
+        { target: "architecture", label: "→ 5. architecture (大規模境界調査・Drift評価)", edge: "edge-1-5", style: "purple" },
+        { target: "review", label: "→ 4. review (コード監査・PRレビュー先行)", edge: null, style: "default" }
+      ],
+      tracer_bullet: [
+        { target: "test_first", label: "→ 3. test_first (パッケージ分割 & PBT拡張)", edge: "edge-2-3", style: "primary" },
+        { target: "investigation", label: "↩ investigation (未知変数再調査)", edge: null, style: "default" }
+      ],
+      test_first: [
+        { target: "review", label: "→ 4. review (品質・並行性・境界検査)", edge: "edge-3-4", style: "primary" },
+        { target: "tracer_bullet", label: "↩ tracer_bullet (契約再定義)", edge: null, style: "warn" }
+      ],
+      review: [
+        { target: "architecture", label: "→ 5. architecture (Drift判定・ガバナンス)", edge: "edge-4-5", style: "primary" },
+        { target: "tracer_bullet", label: "↩ tracer_bullet (欠陥発見 Back Edge)", edge: "edge-back", style: "warn" },
+        { target: "dead_code_cleanup", label: "→ 6. dead_code_cleanup (即時クリーンアップ)", edge: "edge-4-6", style: "green" }
+      ],
+      architecture: [
+        { target: "tracer_bullet", label: "→ 2. tracer_bullet (技術選定・ADRスパイク検証)", edge: "edge-5-2", style: "orange" },
+        { target: "dead_code_cleanup", label: "→ 6. dead_code_cleanup (NO_CHANGE/MINOR)", edge: "edge-5-6", style: "primary" },
+        { target: "stop", label: "⛔ [STOP] 人間へのADR提案 (STRUCTURAL_ADJUST)", edge: "edge-stop", style: "danger" }
+      ],
+      stop: [
+        { target: "investigation", label: "↺ 人間承認後: 再調査・実装開始", edge: null, style: "primary" },
+        { target: "tracer_bullet", label: "→ 2. tracer_bullet (承認ADR方針でスパイク)", edge: "edge-5-2", style: "orange" }
+      ],
+      dead_code_cleanup: [
+        { target: "pre_commit_leak_review", label: "→ 7. pre_commit_leak (コミット前検査)", edge: "edge-6-7", style: "primary" },
+        { target: "test_first", label: "↩ test_first (回帰テスト拡充)", edge: null, style: "default" }
+      ],
+      pre_commit_leak_review: [
+        { target: "investigation", label: "🎉 コミット完了・次のサイクルへ", edge: null, style: "primary" }
+      ]
+    };
+
+    let activeScenario = "full";
+
+    function selectNode(key) {
+      transitionTo(key, null);
+    }
+
+    function transitionTo(key, edgeId) {
+      currentKey = key;
+      document.getElementById("lblCurrent").textContent = key;
+
+      // ノード選択スタイル更新
+      document.querySelectorAll(".node-group").forEach(el => el.classList.remove("active"));
+      const activeEl = document.getElementById("node-" + key);
+      if (activeEl) activeEl.classList.add("active");
+
+      // エッジアニメーション更新
+      document.querySelectorAll(".edge-path").forEach(el => el.classList.remove("active-flow"));
+      if (edgeId) {
+        const e = document.getElementById(edgeId);
+        if (e) e.classList.add("active-flow");
+      }
+
+      // 詳細ヘッダー更新
+      const data = STATE_DATA[key] || STATE_DATA["investigation"];
+      document.getElementById("dTitle").textContent = data.title;
+      document.getElementById("dDesc").textContent = data.desc;
+      document.getElementById("dVerify").innerHTML = "<code>" + data.verify + "</code>";
+      document.getElementById("dGuard").textContent = data.guard;
+      document.getElementById("dPkgs").innerHTML = "<code>" + data.pkgs + "</code>";
+
+      // バッジ更新
+      const bContainer = document.getElementById("dBadges");
+      bContainer.innerHTML = "";
+      data.badges.forEach(b => {
+        const span = document.createElement("span");
+        span.className = "pkg-tag";
+        span.textContent = b;
+        bContainer.appendChild(span);
+      });
+
+      // サブタブ生成
+      const tabBar = document.getElementById("subTabBar");
+      tabBar.innerHTML = "";
+      if (data.tabs && data.tabs.length > 0) {
+        currentTabId = data.tabs[0].id;
+        data.tabs.forEach((tab, index) => {
+          const btn = document.createElement("button");
+          btn.className = "tab-btn" + (index === 0 ? " active" : "");
+          btn.textContent = tab.name;
+          btn.onclick = () => switchTab(tab.id);
+          tabBar.appendChild(btn);
+        });
+        renderTabContent(data.tabs[0]);
+      }
+
+      // 動的遷移ボタン群の生成
+      renderDynamicTransitions(key);
+    }
+
+    function renderDynamicTransitions(key) {
+      const container = document.getElementById("dynamicNextButtons");
+      container.innerHTML = "";
+
+      const options = TRANSITIONS[key] || [];
+      options.forEach(opt => {
+        const btn = document.createElement("button");
+        btn.className = opt.style || "";
+        btn.textContent = opt.label;
+        btn.onclick = () => transitionTo(opt.target, opt.edge);
+        container.appendChild(btn);
+      });
+    }
+
+    function setScenario(scenKey) {
+      activeScenario = scenKey;
+      document.querySelectorAll(".archetype-btn").forEach(btn => btn.classList.remove("active"));
+      const activeBtn = document.getElementById("scen-" + scenKey);
+      if (activeBtn) activeBtn.classList.add("active");
+
+      if (scenKey === "bugfix") {
+        // 既知バグシナリオ: investigation から test_first へのショートカットを強調
+        transitionTo("investigation", "edge-1-3");
+      } else if (scenKey === "spike") {
+        // スパイクシナリオ: investigation から architecture への先行調査を強調
+        transitionTo("investigation", "edge-1-5");
+      } else if (scenKey === "audit") {
+        // 監査シナリオ: investigation から review へのショートカット
+        transitionTo("investigation", null);
+      } else {
+        transitionTo("investigation", "edge-1-2");
+      }
+    }
+
+    function resetMachine() {
+      setScenario("full");
+    }
+
+    // 初期化 (investigation から開始)
+    transitionTo("investigation", null);
+  </script>
+</body>
+</html>
