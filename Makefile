@@ -102,14 +102,13 @@ install-antigravity:
 	fi; \
 	echo "Installing .antigravity to $$DEST_ABS..."; \
 	rm -rf "$$DEST_ABS/.antigravity"; \
-	mkdir -p "$$DEST_ABS/.antigravity/workflows" "$$DEST_ABS/.antigravity/skills" "$$DEST_ABS/.antigravity/templates" "$$DEST_ABS/.antigravity/tools"; \
+	mkdir -p "$$DEST_ABS/.antigravity/workflows" "$$DEST_ABS/.antigravity/skills" "$$DEST_ABS/.antigravity/tools"; \
 	cp -f .antigravity/ANTIGRAVITY.md "$$DEST_ABS/.antigravity/"; \
 	cp -f .antigravity/GEMINI.md "$$DEST_ABS/.antigravity/"; \
 	cp -f .antigravity/GEMINI.md "$$DEST_ABS/"; \
 	cp -f .antigravity/hooks.json "$$DEST_ABS/.antigravity/"; \
 	cp -Rf .antigravity/workflows/ "$$DEST_ABS/.antigravity/workflows/"; \
 	cp -Rf .antigravity/skills/ "$$DEST_ABS/.antigravity/skills/"; \
-	cp -Rf templates/ "$$DEST_ABS/.antigravity/templates/"; \
 	cp -Rf tools/ "$$DEST_ABS/.antigravity/tools/"; \
 	echo "Installation complete. Target project is now ready for Antigravity."
 
