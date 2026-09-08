@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0.0",
+  "description": "Capability Tier definitions and fallback degradation policies for AI agents",
+  "tiers": {
+    "routine": {
+      "level": 1,
+      "description": "Low-latency, lightweight tasks such as file lookups, syntactic lint fixes, and regex replacements",
+      "target_tasks": [
+        "file_search",
+        "linter_execution",
+        "pre_commit_scan"
+      ],
+      "model_traits": {
+        "reasoning_intensity": "low",
+        "tool_use_depth": "shallow",
+        "context_window_min_tokens": 16000
+      },
+      "fallback_tier": null
+    },
+    "standard": {
+      "level": 2,
+      "description": "Core coding and testing tasks including tracer bullets, test expansion, and dead code cleanup",
+      "target_tasks": [
+        "tracer_bullet_implementation",
+        "test_first_expansion",
+        "property_based_testing",
+        "dead_code_cleanup"
+      ],
+      "model_traits": {
+        "reasoning_intensity": "medium",
+        "tool_use_depth": "deep",
+        "context_window_min_tokens": 64000
+      },
+      "fallback_tier": "routine"
+    },
+    "frontier": {
+      "level": 3,
+      "description": "High-complexity tasks including deep root-cause analysis, cross-module architectural decisions, and ADR drafting",
+      "target_tasks": [
+        "cross_module_impact_investigation",
+        "architecture_drift_governance",
+        "adr_drafting",
+        "spec_provocation_review"
+      ],
+      "model_traits": {
+        "reasoning_intensity": "high",
+        "tool_use_depth": "deep",
+        "context_window_min_tokens": 128000
+      },
+      "fallback_tier": "standard",
+      "degradation_policy": {
+        "target": "standard",
+        "strategy": "PROMPT_DEEPENING",
+        "description": "When a frontier model is unavailable, gracefully degrade to standard tier with enriched context and step-by-step reasoning prompts rather than failing."
+      }
+    }
+  },
+  "node_tier_mapping": {
+    "INVESTIGATION": "frontier",
+    "TRACER_BULLET": "standard",
+    "TEST_FIRST": "standard",
+    "REVIEW": "frontier",
+    "ARCHITECTURE": "frontier",
+    "DEAD_CODE_CLEANUP": "standard",
+    "PRE_COMMIT_LEAK_REVIEW": "routine",
+    "HUMAN_DECISION": null
+  }
+}

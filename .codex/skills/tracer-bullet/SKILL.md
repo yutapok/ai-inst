@@ -39,7 +39,7 @@ The tracer bullet is not responsible for:
 - Broad refactoring for maintainability
 - Exhaustive error handling
 
-If the tracer bullet works but the public contract still has unresolved provocation concerns, return to `CONTRACT_LOCK` instead of proceeding to `EXPAND`.
+If the tracer bullet works but the public contract still has unresolved provocation concerns, refine the contract within `TRACER_BULLET` or return to `INVESTIGATION` instead of proceeding to `TEST_FIRST`.
 
 After the tracer bullet is proven, use the planner skill to suggest the next best action.
 

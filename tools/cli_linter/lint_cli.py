@@ -56,6 +56,19 @@ def compare_specs(
     errors.extend(root_errs)
     warnings.extend(root_warns)
 
+    # Check root output_schema
+    base_schema = baseline.get("output_schema")
+    curr_schema = current.get("output_schema")
+    if base_schema is not None:
+        if curr_schema is None:
+            errors.append("[root] output_schema removed")
+        else:
+            s_errs, s_warns = compare_output_schema("root", base_schema, curr_schema)
+            errors.extend(s_errs)
+            warnings.extend(s_warns)
+    elif curr_schema is not None:
+        warnings.append("[root] New output_schema defined (Non-breaking)")
+
     return errors, warnings
 
 
@@ -80,6 +93,85 @@ def compare_command_spec(
     )
     errors.extend(flag_errs)
     warnings.extend(flag_warns)
+
+    # Recursively compare nested subcommands
+    base_subs = base.get("subcommands", {})
+    curr_subs = curr.get("subcommands", {})
+    for sub_name, base_sub in base_subs.items():
+        if sub_name not in curr_subs:
+            errors.append(f"[{prefix}] Subcommand removed: '{sub_name}'")
+        else:
+            curr_sub = curr_subs[sub_name]
+            sub_errs, sub_warns = compare_command_spec(
+                f"{prefix} {sub_name}", base_sub, curr_sub
+            )
+            errors.extend(sub_errs)
+            warnings.extend(sub_warns)
+
+    for sub_name in curr_subs:
+        if sub_name not in base_subs:
+            warnings.append(f"[{prefix}] New subcommand added: '{sub_name}' (Non-breaking)")
+
+    # Compare output schema
+    base_schema = base.get("output_schema")
+    curr_schema = curr.get("output_schema")
+    if base_schema is not None:
+        if curr_schema is None:
+            errors.append(f"[{prefix}] output_schema removed")
+        else:
+            s_errs, s_warns = compare_output_schema(prefix, base_schema, curr_schema)
+            errors.extend(s_errs)
+            warnings.extend(s_warns)
+    elif curr_schema is not None:
+        warnings.append(f"[{prefix}] New output_schema defined (Non-breaking)")
+
+    return errors, warnings
+
+
+def compare_output_schema(
+    prefix: str, base_schema: Dict[str, Any], curr_schema: Dict[str, Any]
+) -> Tuple[List[str], List[str]]:
+    """Compares JSON schemas to detect breaking changes (field removals, type changes)."""
+    errors: List[str] = []
+    warnings: List[str] = []
+
+    # Check type
+    base_type = base_schema.get("type")
+    curr_type = curr_schema.get("type")
+    if base_type and curr_type and base_type != curr_type:
+        errors.append(
+            f"[{prefix}] output_schema type changed from '{base_type}' to '{curr_type}'"
+        )
+        return errors, warnings
+
+    base_props = base_schema.get("properties", {})
+    curr_props = curr_schema.get("properties", {})
+
+    for prop_name, base_prop in base_props.items():
+        if prop_name not in curr_props:
+            errors.append(f"[{prefix}] output_schema property removed: '{prop_name}'")
+        else:
+            curr_prop = curr_props[prop_name]
+            # Check property type
+            bp_type = base_prop.get("type")
+            cp_type = curr_prop.get("type")
+            if bp_type and cp_type and bp_type != cp_type:
+                errors.append(
+                    f"[{prefix}] output_schema property '{prop_name}' type changed from '{bp_type}' to '{cp_type}'"
+                )
+            # Recursive check if nested object
+            if bp_type == "object" and cp_type == "object":
+                nested_errs, nested_warns = compare_output_schema(
+                    f"{prefix}.{prop_name}", base_prop, curr_prop
+                )
+                errors.extend(nested_errs)
+                warnings.extend(nested_warns)
+
+    for prop_name in curr_props:
+        if prop_name not in base_props:
+            warnings.append(
+                f"[{prefix}] output_schema new property added: '{prop_name}' (Compatible)"
+            )
 
     return errors, warnings
 

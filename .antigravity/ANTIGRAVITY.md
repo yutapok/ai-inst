@@ -16,7 +16,7 @@
 Gemini (Antigravity) possesses a **vast context window capable of ingestion and semantic lookup across the entire codebase and log history**. However, to maintain high compliance with long instructions and prevent task deviation, Gemini must adhere to the following role-specific constraints:
 
 - **Maximize Strengths (Vast Context & Investigation)**:
-  - Lead deep code exploration, impact analysis, logs troubleshooting, and broad context retrieval during the `INVESTIGATE` state.
+  - Lead deep code exploration, impact analysis, logs troubleshooting, and broad context retrieval during the `INVESTIGATION` state.
   - Analyze multi-modal cues (such as UI/UX layout states) when relevant.
 - **Mitigate Weaknesses (Focus Deviation & Instruction Compliance)**:
   - Deconstruct complex tasks into atomic, single-step operations. Execute commands and verify changes sequentially rather than attempting parallel massive edits.

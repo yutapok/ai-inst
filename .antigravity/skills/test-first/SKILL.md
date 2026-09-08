@@ -57,6 +57,6 @@ All test code must be structured so that a human reviewer or an AI agent can exe
 
 ## 4. Autonomous Inner Loop Rules
 
-- **Run Fast Tests Autonomously**: In your `/expand` loop, run Domain Unit Tests and In-Process Contract Tests after every logical edit.
+- **Run Fast Tests Autonomously**: In your `TEST_FIRST` loop, run Domain Unit Tests and In-Process Contract Tests after every logical edit.
 - **Diff-Friendly Assertions**: Use structured comparisons (e.g., dict equality, model equality) that yield concise diffs on failure, rather than substring checks on unstructured logs.
 - **Avoid Spec Gaming**: If a test fails, fix the internal implementation. Never weaken or delete assertions simply to make tests pass.

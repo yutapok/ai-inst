@@ -17,27 +17,30 @@ Antigravity operates on **7 Core Skills** connected as an explicit execution sta
 
 ```mermaid
 stateDiagram-v2
-    [*] --> investigation: 1. 課題・コードベース調査 (事実と仮説)
-    investigation --> tracer_bullet: 事実確定
-    tracer_bullet --> test_first: 2. 最小E2E開通 & 契約固定
-    test_first --> review: 3. PBT/不変条件保護 & テスト拡張
+    [*] --> INVESTIGATION: 開始
     
-    review --> architecture: 4. 品質・設計クリア
-    review --> tracer_bullet: 欠陥発見・差し戻し (Back Edge)
+    %% Forward Core Loop
+    INVESTIGATION --> TRACER_BULLET: 事実確定 (FACTS_ESTABLISHED)
+    TRACER_BULLET --> TEST_FIRST: 最小E2E開通 & 契約固定 (CONTRACT_LOCKED)
+    TEST_FIRST --> REVIEW: テスト拡張 & PBT不変条件 (TESTS_EXPANDED)
+    REVIEW --> ARCHITECTURE: 品質クリア (QUALITY_CLEARED)
     
-    state architecture {
-        [*] --> Drift判定
-        Drift判定 --> NO_CHANGE
-        Drift判定 --> MINOR_UPDATE
-        Drift判定 --> STRUCTURAL_ADJUST
-    }
+    %% Back Edge & Shortcuts
+    REVIEW --> TRACER_BULLET: 欠陥発見・差し戻し (DEFECT_FOUND)
+    REVIEW --> DEAD_CODE_CLEANUP: 即時クリーンアップ (CLEANUP_TRIGGERED)
+    INVESTIGATION --> TEST_FIRST: 既知パス修正 (KNOWN_PATH_BUGFIX)
+    INVESTIGATION --> ARCHITECTURE: 大規模境界事前調査 (LARGE_BOUNDARY_STUDY)
+    INVESTIGATION --> REVIEW: 監査のみ (AUDIT_ONLY)
+    ARCHITECTURE --> TRACER_BULLET: 設計スパイク検証 (SPIKE_PROTOTYPE)
     
-    STRUCTURAL_ADJUST --> [*]: 【STOP】 人間へのADR提案
-    NO_CHANGE --> dead_code_cleanup: 5. 境界維持確認
-    MINOR_UPDATE --> dead_code_cleanup: ドキュメント修正
+    %% Drift Governance & Cleanups
+    ARCHITECTURE --> HUMAN_DECISION: 【STOP】 構造的変更 (STRUCTURAL_ADJUST)
+    ARCHITECTURE --> DEAD_CODE_CLEANUP: 境界維持・ドキュメント更新 (NO_CHANGE_OR_MINOR)
     
-    dead_code_cleanup --> pre_commit_leak_review: 6. 不要コード刈り取り
-    pre_commit_leak_review --> [*]: 7. 漏洩検査完了・コミット準備
+    DEAD_CODE_CLEANUP --> PRE_COMMIT_LEAK_REVIEW: 不要コード刈り取り完了 (CLEANUP_DONE)
+    PRE_COMMIT_LEAK_REVIEW --> INVESTIGATION: 次のサイクルへ (CYCLE_COMPLETE)
+    PRE_COMMIT_LEAK_REVIEW --> [*]: コミット準備完了
+    HUMAN_DECISION --> [*]: 人間判断待ち
 ```
 
 ## Role-Specific Guidance: Antigravity 2.0 & Gemini 3.8+
@@ -48,7 +51,7 @@ Antigravity 2.0 equips the agent with first-class primitives: **Artifacts**, **S
   - Never dump massive reports, complete files, or raw test ledgers directly into the conversation chat.
   - Deliver plans, mission summaries, and reviews as **Artifacts** (`write_to_file` into the artifact directory) so the human can review them directly in the Canvas panel without polluting conversation context.
 - **Executable Diagrams & Canvas Review**:
-  - In `CONTRACT_LOCK` and investigation, formulate Mermaid.js sequence or DAG diagrams directly inside Markdown Artifacts. Bind each path/node to a Scenario ID (e.g., `SCN-001-HAPPY-PATH`) or Component Identifier.
+  - In `TRACER_BULLET` (contract locking) and `INVESTIGATION`, formulate Mermaid.js sequence or DAG diagrams directly inside Markdown Artifacts. Bind each path/node to a Scenario ID (e.g., `SCN-001-HAPPY-PATH`) or Component Identifier.
   - Review diagrams natively in Gemini Canvas without generating standalone HTML files, keeping the workflow clean and zero-overhead.
 - **Subagent Parallelism**:
   - When investigating broad unfamiliar repositories or evaluating 2–3 competing technical approaches for a tracer bullet, spawn subagents with isolated workspaces (`share` or `branch`).

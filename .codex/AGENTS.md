@@ -16,10 +16,10 @@
 Codex excels in **detailed implementation, rigorous logic verification, test-first expansion, and post-implementation cleanups**. However, to prevent local optimization and context loss, Codex must adhere to the following role-specific constraints:
 
 - **Maximize Strengths (Precision & Implementation)**:
-  - Lead execution during the `TRACER` (Tracer Bullet) and `EXPAND` (Test-First Expansion) states.
+  - Lead execution during the `TRACER_BULLET` (Tracer Bullet) and `TEST_FIRST` (Test-First Expansion) states.
   - Drive code optimization, test coverage hardening, and dead-code removal (`dead-code-cleanup`).
 - **Mitigate Weaknesses (Context Loss & Boundary Drift)**:
-  - Before writing code, always perform an `INVESTIGATE` step to verify project-wide boundaries and dependency directions.
+  - Before writing code, always perform an `INVESTIGATION` step to verify project-wide boundaries and dependency directions.
   - Never breach established CLI/API contracts. If a local change risks causing architectural drift (`STRUCTURAL_ADJUST`), immediately halt and escalate to `HUMAN_DECISION`.
 
 ## Codex Workflow Sources
@@ -55,27 +55,30 @@ Codex operates on **7 Core Skills** connected as an explicit execution state gra
 
 ```mermaid
 stateDiagram-v2
-    [*] --> investigation: 1. 課題・コードベース調査 (事実と仮説)
-    investigation --> tracer_bullet: 事実確定
-    tracer_bullet --> test_first: 2. 最小E2E開通 & 契約固定
-    test_first --> review: 3. PBT/不変条件保護 & テスト拡張
+    [*] --> INVESTIGATION: 開始
     
-    review --> architecture: 4. 品質・設計クリア
-    review --> tracer_bullet: 欠陥発見・差し戻し (Back Edge)
+    %% Forward Core Loop
+    INVESTIGATION --> TRACER_BULLET: 事実確定 (FACTS_ESTABLISHED)
+    TRACER_BULLET --> TEST_FIRST: 最小E2E開通 & 契約固定 (CONTRACT_LOCKED)
+    TEST_FIRST --> REVIEW: テスト拡張 & PBT不変条件 (TESTS_EXPANDED)
+    REVIEW --> ARCHITECTURE: 品質クリア (QUALITY_CLEARED)
     
-    state architecture {
-        [*] --> Drift判定
-        Drift判定 --> NO_CHANGE
-        Drift判定 --> MINOR_UPDATE
-        Drift判定 --> STRUCTURAL_ADJUST
-    }
+    %% Back Edge & Shortcuts
+    REVIEW --> TRACER_BULLET: 欠陥発見・差し戻し (DEFECT_FOUND)
+    REVIEW --> DEAD_CODE_CLEANUP: 即時クリーンアップ (CLEANUP_TRIGGERED)
+    INVESTIGATION --> TEST_FIRST: 既知パス修正 (KNOWN_PATH_BUGFIX)
+    INVESTIGATION --> ARCHITECTURE: 大規模境界事前調査 (LARGE_BOUNDARY_STUDY)
+    INVESTIGATION --> REVIEW: 監査のみ (AUDIT_ONLY)
+    ARCHITECTURE --> TRACER_BULLET: 設計スパイク検証 (SPIKE_PROTOTYPE)
     
-    STRUCTURAL_ADJUST --> [*]: 【STOP】 人間へのADR提案
-    NO_CHANGE --> dead_code_cleanup: 5. 境界維持確認
-    MINOR_UPDATE --> dead_code_cleanup: ドキュメント修正
+    %% Drift Governance & Cleanups
+    ARCHITECTURE --> HUMAN_DECISION: 【STOP】 構造的変更 (STRUCTURAL_ADJUST)
+    ARCHITECTURE --> DEAD_CODE_CLEANUP: 境界維持・ドキュメント更新 (NO_CHANGE_OR_MINOR)
     
-    dead_code_cleanup --> pre_commit_leak_review: 6. 不要コード刈り取り
-    pre_commit_leak_review --> [*]: 7. 漏洩検査完了・コミット準備
+    DEAD_CODE_CLEANUP --> PRE_COMMIT_LEAK_REVIEW: 不要コード刈り取り完了 (CLEANUP_DONE)
+    PRE_COMMIT_LEAK_REVIEW --> INVESTIGATION: 次のサイクルへ (CYCLE_COMPLETE)
+    PRE_COMMIT_LEAK_REVIEW --> [*]: コミット準備完了
+    HUMAN_DECISION --> [*]: 人間判断待ち
 ```
 
 ### Skill Routing Table
@@ -94,16 +97,18 @@ Use the following 7 skills by default:
 
 Codex must navigate the state graph based on task maturity:
 
-- `INVESTIGATE`: Gather facts, separate hypotheses, declare unknowns before modifying.
-- `TRACER`: Lock the observable contract (CLI/API boundary) and prove the minimal happy path locally.
-- `EXPAND`: Expand coverage via GWT scenarios and enforce invariants using Property-Based Testing (PBT).
+- `INVESTIGATION`: Gather facts, separate hypotheses, declare unknowns before modifying.
+- `TRACER_BULLET`: Lock the observable contract (CLI/API boundary) and prove the minimal happy path locally.
+- `TEST_FIRST`: Expand coverage via GWT scenarios and enforce invariants using Property-Based Testing (PBT).
 - `REVIEW`: Evaluate cross-module impact, security, performance, and code quality.
-- `DRIFT_CHECK`: Classify architectural changes into `NO_CHANGE`, `MINOR_UPDATE`, or `STRUCTURAL_ADJUST`.
+- `ARCHITECTURE`: Classify architectural changes into `NO_CHANGE`, `MINOR_UPDATE`, or `STRUCTURAL_ADJUST`.
+- `DEAD_CODE_CLEANUP`: Post-implementation code reduction and dead-code removal.
+- `PRE_COMMIT_LEAK_REVIEW`: Review staged git changes for secrets and personal disclosures.
 - `HUMAN_DECISION`: [STOP] when `STRUCTURAL_ADJUST` occurs or when public boundaries change.
 
 ### Tracer-before-Test-First Rule
 
-Codex must prefer `TRACER` before `EXPAND` when any of the following are true:
+Codex must prefer `TRACER_BULLET` before `TEST_FIRST` when any of the following are true:
 
 - A new execution path is being introduced
 - A new adapter or external integration is being added
@@ -111,23 +116,23 @@ Codex must prefer `TRACER` before `EXPAND` when any of the following are true:
 - The implementation approach is still uncertain
 - The blast radius is unclear
 
-Codex may start with `EXPAND` or direct implementation when all of the following are true:
+Codex may start with `TEST_FIRST` or direct implementation when all of the following are true:
 
 - The existing execution path already works
 - The change is local and well understood
 - The contract is unchanged or already protected
 - The work is primarily a bug fix, narrow refactor, or pure test addition
 
-When the `Tracer-before-Test-First Rule` says `TRACER`, Codex must not jump directly into broad test-first expansion.
+When the `Tracer-before-Test-First Rule` says `TRACER_BULLET`, Codex must not jump directly into broad test-first expansion.
 
 ### Flexible Insertion Rules
 
-Codex may insert `INVESTIGATE`, `REVIEW`, or `DRIFT_CHECK` between implementation steps when needed.
+Codex may insert `INVESTIGATION`, `REVIEW`, or `ARCHITECTURE` between implementation steps when needed.
 
-- Re-enter `INVESTIGATE` when new uncertainty appears
-- Return to `CONTRACT_LOCK` when provocation reveals an unresolved contract concern
+- Re-enter `INVESTIGATION` when new uncertainty appears
+- Return to `TRACER_BULLET` when provocation reveals an unresolved contract concern
 - Insert `REVIEW` when implementation has accumulated enough risk or surface area
-- Insert `DRIFT_CHECK` when architectural boundaries, public contracts, or technology choices may have changed
+- Insert `ARCHITECTURE` when architectural boundaries, public contracts, or technology choices may have changed
 - Move to `HUMAN_DECISION` when the unresolved concern is about product meaning, public boundary semantics, or responsibility boundaries rather than code mechanics
 
 ### Review and Drift Triggers
@@ -141,7 +146,7 @@ Queue a `REVIEW` recommendation when any of the following are true:
 - Temporary implied ADR notes exist
 - The user asks for hardening, cleanup, or broader confidence
 
-Queue a `DRIFT_CHECK` recommendation when any of the following are true:
+Queue an `ARCHITECTURE` recommendation when any of the following are true:
 
 - Dependency direction has changed
 - Responsibilities moved across boundaries

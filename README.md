@@ -134,7 +134,7 @@ After distribution, next-step recommendations are standardized at major checkpoi
 - When `1.` assumes code changes, add a short `Verify:` line with a local build, test, or command for the user.
 - Keep `Verify:` to one command and one observation point so the user can run it without choosing among alternatives.
 - When a follow-up can run independently in parallel, prefix that action with `（Async）`.
-- Keep workflow state tokens explicit: `INVESTIGATE`, `CONTRACT_LOCK`, `TRACER`, `EXPAND`, `REVIEW`, `DRIFT_CHECK`, `HUMAN_DECISION`.
+- Keep workflow state tokens explicit: `INVESTIGATION`, `TRACER_BULLET`, `TEST_FIRST`, `REVIEW`, `ARCHITECTURE`, `DEAD_CODE_CLEANUP`, `PRE_COMMIT_LEAK_REVIEW`, `HUMAN_DECISION`.
 - Add `Current Read:` only when the current status is not already obvious.
 
 Canonical format:

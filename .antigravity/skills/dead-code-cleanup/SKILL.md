@@ -61,7 +61,7 @@ Do not recommend autonomous deletion when:
 - The code is part of a public contract and removal would change observable behavior
 - The code may be a dormant feature flag or deliberate extension point with unclear ownership
 - The code looks redundant but is required for security, observability, or operations
-- The code crosses an architectural boundary in a way that may require `DRIFT_CHECK`
+- The code crosses an architectural boundary in a way that may require `ARCHITECTURE`
 
 In those cases, classify it as `KEEP` or `Needs Human Decision`.
 

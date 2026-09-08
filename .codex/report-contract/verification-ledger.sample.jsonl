@@ -1,1 +1,1 @@
-{"facts":{"timestamp":"2026-04-24T10:10:00Z","task_id":"sample-task-001","command":"make test","exit_code":0,"observation":"Integration tests passed and preserved the Codex install contracts."},"inferences":{}}
+{"facts":{"timestamp":"2026-04-24T10:10:00Z","task_id":"sample-task-001","command":"make test","exit_code":0,"verification_level":"LOCAL_RUNTIME","observation":"Integration tests passed and preserved the Codex install contracts."},"inferences":{}}

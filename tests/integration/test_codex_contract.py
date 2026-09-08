@@ -253,6 +253,124 @@ class CodexContractIntegrationTests(unittest.TestCase):
             self.assertEqual(proc_pass.returncode, 0)
             self.assertIn("New optional flag added: '--dry-run' (Compatible)", proc_pass.stdout)
 
+            # Test recursive nested subcommands and output_schema breaking detection
+            base_nested = Path(tmpdir) / "base_nested.json"
+            curr_nested_broken = Path(tmpdir) / "curr_nested_broken.json"
+
+            base_nested.write_text(json.dumps({
+                "name": "mycli",
+                "subcommands": {
+                    "cluster": {
+                        "subcommands": {
+                            "node": {
+                                "flags": {"--zone": {"required": True}},
+                                "output_schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {"type": "string"},
+                                        "status": {"type": "string"}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }))
+
+            curr_nested_broken.write_text(json.dumps({
+                "name": "mycli",
+                "subcommands": {
+                    "cluster": {
+                        "subcommands": {
+                            "node": {
+                                "flags": {},
+                                "output_schema": {
+                                    "type": "object",
+                                    "properties": {
+                                        "id": {"type": "number"}
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }))
+
+            proc_nested = subprocess.run(
+                ["python3", "tools/cli_linter/lint_cli.py", "--baseline", str(base_nested), "--current", str(curr_nested_broken)],
+                cwd=REPO_ROOT,
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(proc_nested.returncode, 1)
+            self.assertIn("[cluster node] Flag removed: '--zone'", proc_nested.stdout)
+            self.assertIn("[cluster node] output_schema property removed: 'status'", proc_nested.stdout)
+            self.assertIn("[cluster node] output_schema property 'id' type changed from 'string' to 'number'", proc_nested.stdout)
+
+    def test_install_home_codex_preserves_reports_and_creates_backup(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_home:
+            env = os.environ.copy()
+            env["HOME"] = tmp_home
+
+            # Create existing .codex with critical report and config
+            existing_codex = Path(tmp_home) / ".codex"
+            reports_dir = existing_codex / "reports"
+            reports_dir.mkdir(parents=True)
+            report_file = reports_dir / "session_log_001.jsonl"
+            report_file.write_text('{"event": "task_completed"}')
+
+            # Run make install-home-codex-core
+            proc = self.run_cmd("make", "install-home-codex-core", env=env)
+            self.assertEqual(proc.returncode, 0)
+            self.assertIn("Backing up existing", proc.stdout)
+
+            # Verify backup directory was created
+            backups = list(Path(tmp_home).glob(".codex.backup.*"))
+            self.assertEqual(len(backups), 1, "Backup directory was not created!")
+            self.assertTrue((backups[0] / "reports" / "session_log_001.jsonl").exists())
+
+            # Verify original reports were preserved (NOT deleted)
+            self.assertTrue(report_file.exists(), "Existing reports were deleted!")
+            self.assertEqual(report_file.read_text(), '{"event": "task_completed"}')
+
+    def test_report_contract_schema_and_evidence_graph(self) -> None:
+        """Verify report contract 2.0.0 schema, capability tiers, and verification levels."""
+        contract_dir = REPO_ROOT / ".codex" / "report-contract"
+
+        # Verify run-log.sample.jsonl
+        run_log_sample = contract_dir / "run-log.sample.jsonl"
+        self.assertTrue(run_log_sample.is_file())
+        with open(run_log_sample, "r", encoding="utf-8") as fp:
+            line = fp.readline()
+            data = json.loads(line)
+
+        self.assertEqual(data.get("schema_version"), "2.0.0")
+        facts = data.get("facts", {})
+        self.assertIn(facts.get("capability_tier"), {"routine", "standard", "frontier"})
+        evidence_list = facts.get("evidence", [])
+        self.assertIsInstance(evidence_list, list)
+        self.assertGreaterEqual(len(evidence_list), 1)
+
+        valid_levels = {"LOCAL_STATIC", "LOCAL_RUNTIME", "REMOTE_RUNTIME", "PRODUCTION"}
+        for ev in evidence_list:
+            self.assertIn("claim", ev)
+            self.assertIn("command", ev)
+            self.assertIn("status", ev)
+            self.assertIn(ev.get("level"), valid_levels)
+
+        # Verify verification-ledger.sample.jsonl
+        ledger_sample = contract_dir / "verification-ledger.sample.jsonl"
+        with open(ledger_sample, "r", encoding="utf-8") as fp:
+            ledger_data = json.loads(fp.readline())
+        self.assertIn(ledger_data.get("facts", {}).get("verification_level"), valid_levels)
+
+        # Verify README Shareability Guidelines
+        readme = contract_dir / "README.md"
+        content = readme.read_text(encoding="utf-8")
+        self.assertIn("Shareability Guidelines", content)
+        self.assertIn("Strip Private Information", content)
+
 
 if __name__ == "__main__":
     unittest.main()

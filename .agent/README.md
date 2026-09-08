@@ -46,15 +46,15 @@ When you distribute these workflows or summarize the next move for downstream us
 - Use a numbered `次のステップ:` section.
 - Mark only `1.` as recommended with `（推奨）`.
 - If a follow-up can be handled independently in parallel, prefix that action with `（Async）`.
-- Keep the workflow state token explicit so the reader can tell whether the next move is `INVESTIGATE`, `TRACER`, `EXPAND`, `REVIEW`, or `DRIFT_CHECK`.
+- Keep the workflow state token explicit so the reader can tell whether the next move is `INVESTIGATION`, `TRACER_BULLET`, `TEST_FIRST`, `REVIEW`, `ARCHITECTURE`, `DEAD_CODE_CLEANUP`, `PRE_COMMIT_LEAK_REVIEW`, or `HUMAN_DECISION`.
 
 Canonical example:
 
 ```markdown
 次のステップ:
-1. （推奨）TRACER: build the smallest runnable path
+1. （推奨）TRACER_BULLET: build the smallest runnable path
 2. REVIEW: （Async）inspect maintainability and risk
-3. DRIFT_CHECK: confirm the architecture still fits current guardrails
+3. ARCHITECTURE: confirm the architecture still fits current guardrails
 ```
 
 ---

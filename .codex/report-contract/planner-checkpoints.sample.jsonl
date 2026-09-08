@@ -1,1 +1,1 @@
-{"facts":{"timestamp":"2026-04-24T10:05:00Z","task_id":"sample-task-001","checkpoint":"end-of-turn"},"inferences":{"recommended_state":"DRIFT_CHECK","risk_summary":"The proposed observability records are still record-only.","why_now":"Confirm the boundary before adding new artifacts."}}
+{"facts":{"timestamp":"2026-04-24T10:05:00Z","task_id":"sample-task-001","checkpoint":"end-of-turn"},"inferences":{"recommended_state":"ARCHITECTURE","risk_summary":"The proposed observability records are still record-only.","why_now":"Confirm the boundary before adding new artifacts."}}

@@ -15,7 +15,7 @@ A tracer bullet is a technique to build the "smallest technically viable path" b
 
 ## Rules: Don't
 - **Do Not Prematurely Abstract or Split**: Avoid over-designing class hierarchies, extracting interfaces, or rigidly organizing directories until *after* the tracer bullet proves successful.
-- **Do Not Exhaustively Handle Edge Cases**: Full coverage of validation and abnormal behavior handling should be deferred to the subsequent `/expand` (Test-First Expansion) phase.
+- **Do Not Exhaustively Handle Edge Cases**: Full coverage of validation and abnormal behavior handling should be deferred to the subsequent `TEST_FIRST` (Test-First Expansion) phase.
 
 ## Why are Tracer Bullets Necessary?
 They prevent "Speculative Architecture" driven by guesswork, and they provide momentum by quickly delivering a working piece of software locally.

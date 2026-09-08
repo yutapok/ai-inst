@@ -1,9 +1,11 @@
-.PHONY: install install-codex install-home-codex install-home-codex-minimal install-home-codex-core help test install-antigravity install-home-antigravity
+.PHONY: install install-codex install-home-codex install-home-codex-minimal install-home-codex-core help test eval install-antigravity install-home-antigravity
 
 help:
 	@echo "Agentic Architecture Pattern - Antigravity & Codex Configurations"
 	@echo ""
 	@echo "Available Targets:"
+	@echo "  make test                                        - Runs integration contract tests"
+	@echo "  make eval                                        - Runs deterministic state transition evaluation"
 	@echo "  make install              DEST=/path/to/project  - Installs default (.agent) configs (Core 7)"
 	@echo "  make install-antigravity  DEST=/path/to/project  - Installs Antigravity (.antigravity) configs"
 	@echo "  make install-home-antigravity                    - Installs Antigravity configs to Home (~/.gemini/config/ & ~/.gemini/antigravity-cli/)"
@@ -17,6 +19,9 @@ help:
 
 test:
 	@python3 -m unittest discover -s tests/integration -v
+
+eval:
+	@python3 tests/evaluation/eval_harness.py
 
 install:
 	@if [ -z "$(DEST)" ]; then \
@@ -57,8 +62,13 @@ install-codex:
 
 install-home-codex-core:
 	@echo "Installing Codex core configs to $(HOME)/.codex/..."
+	@if [ -d "$(HOME)/.codex" ]; then \
+		BACKUP_DIR="$(HOME)/.codex.backup.$$(date +%Y%m%d%H%M%S)"; \
+		echo "Backing up existing $(HOME)/.codex to $$BACKUP_DIR..."; \
+		cp -Rf "$(HOME)/.codex" "$$BACKUP_DIR"; \
+	fi
 	@rm -f "$(HOME)/.codex/AGENTS.md" "$(HOME)/.codex/config.toml"
-	@rm -rf "$(HOME)/.codex/skills" "$(HOME)/.codex/agents" "$(HOME)/.codex/report-contract" "$(HOME)/.codex/reports"
+	@rm -rf "$(HOME)/.codex/skills" "$(HOME)/.codex/agents" "$(HOME)/.codex/report-contract"
 	@mkdir -p "$(HOME)/.codex/skills" "$(HOME)/.codex/report-contract" "$(HOME)/.codex/reports"
 	@cp -f .codex/AGENTS.md "$(HOME)/.codex/"
 	@cp -Rf .codex/skills/ "$(HOME)/.codex/skills/"
@@ -67,8 +77,13 @@ install-home-codex-core:
 
 install-home-codex:
 	@echo "Installing Codex configs to $(HOME)/.codex/..."
+	@if [ -d "$(HOME)/.codex" ]; then \
+		BACKUP_DIR="$(HOME)/.codex.backup.$$(date +%Y%m%d%H%M%S)"; \
+		echo "Backing up existing $(HOME)/.codex to $$BACKUP_DIR..."; \
+		cp -Rf "$(HOME)/.codex" "$$BACKUP_DIR"; \
+	fi
 	@rm -f "$(HOME)/.codex/AGENTS.md" "$(HOME)/.codex/config.toml"
-	@rm -rf "$(HOME)/.codex/skills" "$(HOME)/.codex/agents" "$(HOME)/.codex/report-contract" "$(HOME)/.codex/reports"
+	@rm -rf "$(HOME)/.codex/skills" "$(HOME)/.codex/agents" "$(HOME)/.codex/report-contract"
 	@mkdir -p "$(HOME)/.codex/skills" "$(HOME)/.codex/agents" "$(HOME)/.codex/report-contract" "$(HOME)/.codex/reports"
 	@cp -f .codex/AGENTS.md "$(HOME)/.codex/"
 	@cp -f .codex/config.toml "$(HOME)/.codex/"
@@ -79,8 +94,13 @@ install-home-codex:
 
 install-home-codex-minimal:
 	@echo "Installing minimal Codex configs to $(HOME)/.codex/..."
+	@if [ -d "$(HOME)/.codex" ]; then \
+		BACKUP_DIR="$(HOME)/.codex.backup.$$(date +%Y%m%d%H%M%S)"; \
+		echo "Backing up existing $(HOME)/.codex to $$BACKUP_DIR..."; \
+		cp -Rf "$(HOME)/.codex" "$$BACKUP_DIR"; \
+	fi
 	@rm -f "$(HOME)/.codex/AGENTS.md" "$(HOME)/.codex/config.toml"
-	@rm -rf "$(HOME)/.codex/skills" "$(HOME)/.codex/agents" "$(HOME)/.codex/report-contract" "$(HOME)/.codex/reports"
+	@rm -rf "$(HOME)/.codex/skills" "$(HOME)/.codex/agents" "$(HOME)/.codex/report-contract"
 	@mkdir -p "$(HOME)/.codex/skills" "$(HOME)/.codex/agents" "$(HOME)/.codex/report-contract" "$(HOME)/.codex/reports"
 	@cp -f .codex/AGENTS.md "$(HOME)/.codex/"
 	@cp -f .codex/config.toml "$(HOME)/.codex/"
@@ -114,6 +134,11 @@ install-antigravity:
 
 install-home-antigravity:
 	@echo "Installing Antigravity configs to Home..."
+	@if [ -d "$(HOME)/.gemini/config" ]; then \
+		BACKUP_DIR="$(HOME)/.gemini/config.backup.$$(date +%Y%m%d%H%M%S)"; \
+		echo "Backing up existing $(HOME)/.gemini/config to $$BACKUP_DIR..."; \
+		cp -Rf "$(HOME)/.gemini/config" "$$BACKUP_DIR"; \
+	fi
 	@echo "1. Installing skills to $(HOME)/.gemini/config/skills/..."
 	@mkdir -p "$(HOME)/.gemini/config/skills"
 	@cp -Rf .antigravity/skills/ "$(HOME)/.gemini/config/skills/"

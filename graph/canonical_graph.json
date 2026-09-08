@@ -1,0 +1,156 @@
+{
+  "schema_version": "1.0.0",
+  "graph_id": "ai_inst_portable_loop",
+  "description": "Canonical State Transition Graph for Agentic Architecture Pattern",
+  "entry_node": "INVESTIGATION",
+  "nodes": {
+    "INVESTIGATION": {
+      "skill": "skills/investigation/SKILL.md",
+      "permission_level": "READ_ONLY",
+      "human_gate": false,
+      "description": "Fact gathering, hypothesis separation, unknown declaration"
+    },
+    "TRACER_BULLET": {
+      "skill": "skills/tracer-bullet/SKILL.md",
+      "permission_level": "WORKSPACE_MUTATE",
+      "human_gate": false,
+      "description": "Minimal viable end-to-end implementation and contract locking"
+    },
+    "TEST_FIRST": {
+      "skill": "skills/test-first/SKILL.md",
+      "permission_level": "WORKSPACE_MUTATE",
+      "human_gate": false,
+      "description": "Coverage expansion (Examples -> Contracts -> Invariants) via PBT"
+    },
+    "REVIEW": {
+      "skill": "skills/review/SKILL.md",
+      "permission_level": "READ_ONLY",
+      "human_gate": false,
+      "description": "Code quality, maintainability, performance, security review"
+    },
+    "ARCHITECTURE": {
+      "skill": "skills/architecture/SKILL.md",
+      "permission_level": "WORKSPACE_MUTATE",
+      "human_gate": false,
+      "description": "Architecture drift evaluation (NO_CHANGE, MINOR_UPDATE, STRUCTURAL_ADJUST)"
+    },
+    "DEAD_CODE_CLEANUP": {
+      "skill": "skills/dead-code-cleanup/SKILL.md",
+      "permission_level": "WORKSPACE_MUTATE",
+      "human_gate": false,
+      "description": "Post-implementation code reduction and dead code deletion"
+    },
+    "PRE_COMMIT_LEAK_REVIEW": {
+      "skill": "skills/pre-commit-leak-review/SKILL.md",
+      "permission_level": "READ_ONLY",
+      "human_gate": false,
+      "description": "Pre-commit leak, privacy, secret exposure review"
+    },
+    "HUMAN_DECISION": {
+      "skill": null,
+      "permission_level": "TERMINAL_HALT",
+      "human_gate": true,
+      "description": "Mandatory human review gate when structural drift occurs"
+    }
+  },
+  "edges": [
+    {
+      "from": "INVESTIGATION",
+      "to": "TRACER_BULLET",
+      "type": "FORWARD",
+      "condition": "FACTS_ESTABLISHED",
+      "description": "Facts confirmed, proceed to tracer bullet"
+    },
+    {
+      "from": "INVESTIGATION",
+      "to": "TEST_FIRST",
+      "type": "SHORTCUT",
+      "condition": "KNOWN_PATH_BUGFIX",
+      "description": "Known path bug fix or pure test expansion"
+    },
+    {
+      "from": "INVESTIGATION",
+      "to": "ARCHITECTURE",
+      "type": "SHORTCUT",
+      "condition": "LARGE_BOUNDARY_STUDY",
+      "description": "Large-scale boundary investigation or ADR pre-study"
+    },
+    {
+      "from": "INVESTIGATION",
+      "to": "REVIEW",
+      "type": "SHORTCUT",
+      "condition": "AUDIT_ONLY",
+      "description": "Pure code audit without modifications"
+    },
+    {
+      "from": "TRACER_BULLET",
+      "to": "TEST_FIRST",
+      "type": "FORWARD",
+      "condition": "CONTRACT_LOCKED",
+      "description": "Observable contract locked, expand test coverage"
+    },
+    {
+      "from": "TEST_FIRST",
+      "to": "REVIEW",
+      "type": "FORWARD",
+      "condition": "TESTS_EXPANDED",
+      "description": "Tests expanded and passing, review implementation"
+    },
+    {
+      "from": "REVIEW",
+      "to": "ARCHITECTURE",
+      "type": "FORWARD",
+      "condition": "QUALITY_CLEARED",
+      "description": "Quality checks passed, verify architecture drift"
+    },
+    {
+      "from": "REVIEW",
+      "to": "TRACER_BULLET",
+      "type": "BACK_EDGE",
+      "condition": "DEFECT_FOUND",
+      "description": "Defect or broken contract discovered, rework tracer bullet"
+    },
+    {
+      "from": "REVIEW",
+      "to": "DEAD_CODE_CLEANUP",
+      "type": "SHORTCUT",
+      "condition": "CLEANUP_TRIGGERED",
+      "description": "Review identifies safe post-implementation cleanup opportunities"
+    },
+    {
+      "from": "ARCHITECTURE",
+      "to": "TRACER_BULLET",
+      "type": "SHORTCUT",
+      "condition": "SPIKE_PROTOTYPE",
+      "description": "Architecture exploratory spike needed before settling design"
+    },
+    {
+      "from": "ARCHITECTURE",
+      "to": "DEAD_CODE_CLEANUP",
+      "type": "FORWARD",
+      "condition": "NO_CHANGE_OR_MINOR",
+      "description": "Architecture conforms or minor updates applied, proceed to cleanup"
+    },
+    {
+      "from": "ARCHITECTURE",
+      "to": "HUMAN_DECISION",
+      "type": "HALT",
+      "condition": "STRUCTURAL_ADJUST",
+      "description": "Structural drift detected, halt and escalate to human"
+    },
+    {
+      "from": "DEAD_CODE_CLEANUP",
+      "to": "PRE_COMMIT_LEAK_REVIEW",
+      "type": "FORWARD",
+      "condition": "CLEANUP_DONE",
+      "description": "Cleanup complete, verify no leaks before committing"
+    },
+    {
+      "from": "PRE_COMMIT_LEAK_REVIEW",
+      "to": "INVESTIGATION",
+      "type": "FORWARD",
+      "condition": "CYCLE_COMPLETE",
+      "description": "Commit completed, ready for next loop cycle"
+    }
+  ]
+}
