@@ -42,19 +42,35 @@ class CanonicalGraphManifestTests(unittest.TestCase):
 
     def test_schema_structure_and_nodes(self):
         """Verify top-level structure, version, entry node, and node presence."""
-        self.assertEqual(self.manifest.get("schema_version"), "1.0.0")
+        self.assertEqual(self.manifest.get("schema_version"), "2.0.0")
         self.assertEqual(self.manifest.get("graph_id"), "ai_inst_portable_loop")
         self.assertEqual(self.manifest.get("entry_node"), "INVESTIGATION")
+
+        # Execution profiles check
+        profiles = self.manifest.get("execution_profiles", {})
+        self.assertEqual(set(profiles.keys()), {"economy", "balanced", "deep_parallel"})
+        self.assertFalse(profiles["economy"]["allow_subagents"])
+        self.assertEqual(profiles["economy"]["max_parallel_workers"], 1)
+        self.assertTrue(profiles["balanced"]["allow_subagents"])
+        self.assertTrue(profiles["deep_parallel"]["allow_subagents"])
 
         nodes = self.manifest.get("nodes", {})
         self.assertEqual(set(nodes.keys()), EXPECTED_NODES)
 
+        valid_topologies = {"SINGLE_AGENT", "MULTI_AGENT_FAN_OUT", "HYBRID_COMPETITIVE", "HUMAN_GATE"}
+        valid_fan_ins = {"FACT_UNION", "ARBITRATION_BY_CONTRACT", "RISK_LEDGER_MERGE", "NOT_APPLICABLE", "HUMAN_INSPECTION"}
+
         for node_id, node_data in nodes.items():
             self.assertIn("permission_level", node_data, f"Node {node_id} missing permission_level")
             self.assertIn("human_gate", node_data, f"Node {node_id} missing human_gate")
+            self.assertIn(node_data.get("execution_topology"), valid_topologies, f"Node {node_id} invalid topology")
+            self.assertIn(node_data.get("fan_in_policy"), valid_fan_ins, f"Node {node_id} invalid fan_in_policy")
+            self.assertIsInstance(node_data.get("subagent_roles"), list)
+
             if node_id == "HUMAN_DECISION":
                 self.assertTrue(node_data["human_gate"])
                 self.assertEqual(node_data["permission_level"], "TERMINAL_HALT")
+                self.assertEqual(node_data["execution_topology"], "HUMAN_GATE")
                 self.assertIsNone(node_data["skill"])
             else:
                 self.assertFalse(node_data["human_gate"])

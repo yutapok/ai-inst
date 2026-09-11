@@ -32,7 +32,7 @@ class CapabilityTiersTests(unittest.TestCase):
 
     def test_tier_definitions(self):
         """Verify presence of 3 standard tiers and schema version."""
-        self.assertEqual(self.data.get("schema_version"), "1.0.0")
+        self.assertEqual(self.data.get("schema_version"), "1.1.0")
         tiers = self.data.get("tiers", {})
         self.assertEqual(set(tiers.keys()), EXPECTED_TIERS)
 
@@ -77,6 +77,18 @@ class CapabilityTiersTests(unittest.TestCase):
                 self.assertIsNone(tier)
             else:
                 self.assertIn(tier, EXPECTED_TIERS, f"Node {node_name} mapped to unknown tier: {tier}")
+
+    def test_subagent_role_coverage(self):
+        """Verify that every subagent role declared in canonical graph has a mapped tier."""
+        declared_roles = set()
+        for node_data in self.graph.get("nodes", {}).values():
+            for role in node_data.get("subagent_roles", []):
+                declared_roles.add(role)
+
+        role_mapping = self.data.get("subagent_role_tier_mapping", {})
+        for role in declared_roles:
+            self.assertIn(role, role_mapping, f"Declared subagent role '{role}' missing tier mapping")
+            self.assertIn(role_mapping[role], EXPECTED_TIERS)
 
     def test_vendor_neutrality(self):
         """Ensure no vendor-specific model strings leak into tiers.json."""

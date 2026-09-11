@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Agentic State Transition Graph (Enhanced Go Architecture)</title>
+  <title>Agentic State Transition Graph v2 (Canonical Manifest & Go Architecture)</title>
   <style>
     :root {
       --bg: #0d1117;
@@ -16,8 +16,11 @@
       --success: #3fb950;
       --success-bg: rgba(63, 185, 80, 0.15);
       --warning: #d29922;
+      --warning-bg: rgba(210, 153, 34, 0.15);
       --danger: #f85149;
       --danger-bg: rgba(248, 81, 73, 0.15);
+      --purple: #bc8cff;
+      --purple-bg: rgba(188, 140, 255, 0.15);
       --code-bg: #090d13;
     }
 
@@ -40,6 +43,8 @@
       align-items: center;
       padding-bottom: 12px;
       border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+      gap: 10px;
     }
     h1 { font-size: 1.25rem; font-weight: 600; color: #f0f6fc; display: flex; align-items: center; gap: 8px; }
     .badge {
@@ -50,19 +55,24 @@
       color: var(--accent);
       border: 1px solid rgba(88, 166, 255, 0.3);
     }
+    .badge.v2 {
+      background: var(--purple-bg);
+      color: var(--purple);
+      border-color: rgba(188, 140, 255, 0.4);
+    }
 
     /* 上部: グラフエリア (縦並びで広々表示) */
     .graph-section {
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 12px;
+      padding: 14px;
       position: relative;
       box-shadow: 0 4px 20px rgba(0,0,0,0.4);
     }
     .svg-container {
       width: 100%;
-      height: 380px;
+      height: 400px;
       overflow: visible;
     }
     svg {
@@ -95,10 +105,14 @@
       stroke-width: 2.5px;
       filter: drop-shadow(0 0 10px var(--accent-glow));
     }
+    .node-group.stop .node-box {
+      stroke: rgba(248, 81, 73, 0.5);
+    }
     .node-group.stop.active .node-box {
       fill: #331515;
       stroke: var(--danger);
-      filter: drop-shadow(0 0 10px rgba(248, 81, 73, 0.5));
+      stroke-width: 2.5px;
+      filter: drop-shadow(0 0 12px rgba(248, 81, 73, 0.6));
     }
     .node-title {
       font-size: 13px;
@@ -111,6 +125,16 @@
       fill: var(--text-muted);
       pointer-events: none;
     }
+    .node-tier-tag {
+      font-size: 9px;
+      font-weight: bold;
+      fill: #58a6ff;
+      letter-spacing: 0.5px;
+    }
+    .node-tier-tag.frontier { fill: #bc8cff; }
+    .node-tier-tag.standard { fill: #58a6ff; }
+    .node-tier-tag.routine { fill: #7ee787; }
+    .node-tier-tag.gate { fill: #f85149; }
 
     /* エッジ */
     .edge-path {
@@ -131,7 +155,7 @@
     }
     .edge-path.active-flow {
       stroke: var(--accent);
-      stroke-width: 3;
+      stroke-width: 3.5;
       stroke-dasharray: 8, 4;
       animation: flowDash 0.8s linear infinite;
     }
@@ -142,13 +166,12 @@
     /* コントロールバー */
     .controls-bar {
       display: flex;
-      flex-wrap: wrap;
+      flex-direction: column;
       gap: 10px;
-      align-items: center;
       background: var(--card-bg);
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 10px 16px;
+      padding: 12px 16px;
     }
     button {
       background: #21262d;
@@ -211,6 +234,7 @@
       color: #7ee787;
     }
     button.green:hover { background: rgba(126, 231, 135, 0.3); }
+
     .archetype-btn {
       font-size: 11.5px;
       padding: 4px 10px;
@@ -223,7 +247,6 @@
       font-weight: 600;
     }
     .status-pill {
-      margin-left: auto;
       font-size: 12px;
       color: var(--text-muted);
       display: flex;
@@ -236,6 +259,10 @@
       border-radius: 50%;
       background: var(--accent);
       box-shadow: 0 0 6px var(--accent);
+    }
+    .status-dot.halted {
+      background: var(--danger);
+      box-shadow: 0 0 8px var(--danger);
     }
 
     /* 下部: 詳細セクション */
@@ -254,22 +281,26 @@
       align-items: flex-start;
       border-bottom: 1px solid var(--border);
       padding-bottom: 10px;
+      flex-wrap: wrap;
+      gap: 10px;
     }
     .detail-title {
-      font-size: 1.1rem;
+      font-size: 1.15rem;
       font-weight: 600;
       color: #f0f6fc;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
     .detail-desc {
       font-size: 0.88rem;
       color: var(--text-muted);
-      margin-top: 2px;
+      margin-top: 4px;
     }
     .pkg-badges {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
-      margin-top: 8px;
     }
     .pkg-tag {
       font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
@@ -280,14 +311,19 @@
       border-radius: 4px;
       color: #58a6ff;
     }
+    .pkg-tag.tier-frontier { color: var(--purple); border-color: rgba(188, 140, 255, 0.4); background: var(--purple-bg); }
+    .pkg-tag.tier-standard { color: var(--accent); border-color: rgba(88, 166, 255, 0.4); background: rgba(88, 166, 255, 0.15); }
+    .pkg-tag.tier-routine { color: var(--success); border-color: rgba(63, 185, 80, 0.4); background: var(--success-bg); }
+    .pkg-tag.gate-tag { color: var(--danger); border-color: rgba(248, 81, 73, 0.4); background: var(--danger-bg); font-weight: bold; }
 
-    /* タブ切り替えバー (統合テスト/実装コード/差分/実行ログ) */
+    /* タブ切り替えバー */
     .tab-bar {
       display: flex;
       gap: 8px;
       border-bottom: 1px solid var(--border);
       padding-bottom: 8px;
       margin-top: 4px;
+      overflow-x: auto;
     }
     .tab-btn {
       background: transparent;
@@ -297,6 +333,7 @@
       border-radius: 6px;
       font-size: 12px;
       cursor: pointer;
+      white-space: nowrap;
     }
     .tab-btn:hover {
       color: #f0f6fc;
@@ -347,7 +384,7 @@
     /* アーキテクチャ進化図 (Before/After) カード */
     .arch-compare-container {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
       gap: 12px;
       margin-top: 4px;
     }
@@ -355,7 +392,7 @@
       background: #11161d;
       border: 1px solid var(--border);
       border-radius: 6px;
-      padding: 10px 14px;
+      padding: 12px 14px;
       font-size: 12px;
     }
     .arch-card.before { border-left: 4px solid var(--warning); }
@@ -369,7 +406,7 @@
 
     .meta-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
       gap: 12px;
     }
     .meta-card {
@@ -400,17 +437,18 @@
   <header>
     <h1>
       <span>⚡ Agentic State Machine</span>
+      <span class="badge v2">v2.0.0 Canonical Manifest</span>
       <span class="badge">Go Architecture & Verification</span>
     </h1>
     <div style="font-size: 12px; color: var(--text-muted);">
-      Integration Tests • Contract Locking • Regression Ledgers • Architecture Diffs
+      8 Nodes • 14 Transitions • Capability Tiers • Evidence Graph • Deterministic Eval
     </div>
   </header>
 
   <!-- 上部: 広い状態遷移グラフ (横幅100%でゆったり配置) -->
   <section class="graph-section">
     <div class="svg-container">
-      <svg viewBox="0 0 1120 380" id="graphSvg">
+      <svg viewBox="0 0 1140 400" id="graphSvg">
         <defs>
           <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
             <path d="M 0 1 L 10 5 L 0 9 z" fill="#58a6ff" />
@@ -425,7 +463,7 @@
             <path d="M 0 1 L 10 5 L 0 9 z" fill="#79c0ff" />
           </marker>
           <marker id="arrow-purple" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-            <path d="M 0 1 L 10 5 L 0 9 z" fill="#d2a8ff" />
+            <path d="M 0 1 L 10 5 L 0 9 z" fill="#bc8cff" />
           </marker>
           <marker id="arrow-orange" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
             <path d="M 0 1 L 10 5 L 0 9 z" fill="#ff7b72" />
@@ -438,114 +476,153 @@
           </marker>
         </defs>
 
-        <!-- 通常エッジ (順方向) -->
-        <path id="edge-1-2" class="edge-path" d="M 190 90 L 260 90" marker-end="url(#arrow-default)"></path>
-        <path id="edge-2-3" class="edge-path" d="M 430 90 L 500 90" marker-end="url(#arrow-default)"></path>
-        <path id="edge-3-4" class="edge-path" d="M 670 90 L 740 90" marker-end="url(#arrow-default)"></path>
-        <path id="edge-4-5" class="edge-path" d="M 910 90 L 970 90" marker-end="url(#arrow-default)"></path>
-        <path id="edge-5-6" class="edge-path" d="M 1045 130 L 1045 230 L 910 270" marker-end="url(#arrow-default)"></path>
-        <path id="edge-6-7" class="edge-path" d="M 740 270 L 670 270" marker-end="url(#arrow-default)"></path>
+        <!-- 通常エッジ (順方向 Core Loop) -->
+        <path id="edge-1-2" class="edge-path" d="M 195 90 L 260 90" marker-end="url(#arrow-default)"></path>
+        <path id="edge-2-3" class="edge-path" d="M 435 90 L 500 90" marker-end="url(#arrow-default)"></path>
+        <path id="edge-3-4" class="edge-path" d="M 675 90 L 740 90" marker-end="url(#arrow-default)"></path>
+        <path id="edge-4-5" class="edge-path" d="M 915 90 L 970 90" marker-end="url(#arrow-default)"></path>
+        <path id="edge-5-6" class="edge-path" d="M 1045 130 L 1045 250 L 915 285" marker-end="url(#arrow-default)"></path>
+        <path id="edge-6-7" class="edge-path" d="M 740 285 L 675 285" marker-end="url(#arrow-default)"></path>
 
-        <!-- マルチウェイ適応エッジ (Adaptive Multi-Way Network) -->
-        <!-- 1 (Investigation) -> 3 (Test-First): 既知パス・バグ修正ショートカット -->
+        <!-- 適応型マルチウェイエッジ (Canonical Manifest 14 Edges) -->
+        <!-- 1 (INVESTIGATION) -> 3 (TEST_FIRST): 既知パス・バグ修正ショートカット -->
         <path id="edge-1-3" class="edge-path" d="M 105 130 C 105 190, 585 190, 585 130" stroke="#79c0ff" stroke-dasharray="4, 4" marker-end="url(#arrow-cyan)"></path>
-        <text x="345" y="195" fill="#79c0ff" font-size="10" font-weight="600" text-anchor="middle">既知パス・バグ修正 (Tracerスキップ)</text>
+        <text x="345" y="195" fill="#79c0ff" font-size="10" font-weight="600" text-anchor="middle">既知パス・バグ修正 (KNOWN_PATH_BUGFIX)</text>
 
-        <!-- 1 (Investigation) -> 5 (Architecture): アーキテクチャ境界調査・Drift事前評価 -->
-        <path id="edge-1-5" class="edge-path" d="M 105 50 C 105 12, 1045 12, 1045 50" stroke="#d2a8ff" stroke-dasharray="4, 4" marker-end="url(#arrow-purple)"></path>
-        <text x="585" y="14" fill="#d2a8ff" font-size="10" font-weight="600" text-anchor="middle">大規模リファクタ・アーキテクチャ調査先行</text>
+        <!-- 1 (INVESTIGATION) -> 5 (ARCHITECTURE): 大規模境界事前調査 -->
+        <path id="edge-1-5" class="edge-path" d="M 105 50 C 105 12, 1045 12, 1045 50" stroke="#bc8cff" stroke-dasharray="4, 4" marker-end="url(#arrow-purple)"></path>
+        <text x="585" y="14" fill="#bc8cff" font-size="10" font-weight="600" text-anchor="middle">大規模境界事前調査 (LARGE_BOUNDARY_STUDY)</text>
 
-        <!-- 5 (Architecture) -> 2 (Tracer Bullet): 技術選定・ADRスパイク検証 -->
-        <path id="edge-5-2" class="edge-path" d="M 970 70 C 700 30, 450 30, 430 70" stroke="#ff7b72" stroke-dasharray="4, 3" marker-end="url(#arrow-orange)"></path>
+        <!-- 1 (INVESTIGATION) -> 4 (REVIEW): 監査のみ (AUDIT_ONLY) -->
+        <path id="edge-1-4" class="edge-path" d="M 150 130 C 260 215, 680 215, 760 130" stroke="#79c0ff" stroke-dasharray="3, 3" marker-end="url(#arrow-cyan)"></path>
 
-        <!-- 4 (Review) -> 2 (Tracer Bullet): 欠陥発見差し戻し (Back Edge) -->
+        <!-- 5 (ARCHITECTURE) -> 2 (TRACER_BULLET): 設計スパイク検証 (SPIKE_PROTOTYPE) -->
+        <path id="edge-5-2" class="edge-path" d="M 970 70 C 700 30, 450 30, 435 70" stroke="#ff7b72" stroke-dasharray="4, 3" marker-end="url(#arrow-orange)"></path>
+
+        <!-- 4 (REVIEW) -> 2 (TRACER_BULLET): 欠陥発見差し戻し (DEFECT_FOUND: Back Edge) -->
         <path id="edge-back" class="edge-path back-edge" d="M 825 50 C 825 24, 345 24, 345 50" marker-end="url(#arrow-warn)"></path>
 
-        <!-- 4 (Review) -> 6 (Dead Code): 不要コード即時刈り取り -->
-        <path id="edge-4-6" class="edge-path" d="M 825 130 L 825 230" stroke="#7ee787" stroke-dasharray="3, 3" marker-end="url(#arrow-green)"></path>
+        <!-- 4 (REVIEW) -> 6 (DEAD_CODE_CLEANUP): 即時クリーンアップ (CLEANUP_TRIGGERED) -->
+        <path id="edge-4-6" class="edge-path" d="M 825 130 L 825 245" stroke="#7ee787" stroke-dasharray="3, 3" marker-end="url(#arrow-green)"></path>
 
-        <!-- ガードレール停止エッジ: 5 (Architecture) -> STOP -->
+        <!-- 5 (ARCHITECTURE) -> HUMAN_DECISION: ガードレール停止 (STRUCTURAL_ADJUST) -->
         <path id="edge-stop" class="edge-path stop-edge" d="M 1045 130 L 1045 180" marker-end="url(#arrow-danger)"></path>
 
-        <!-- ノード群 -->
+        <!-- 7 (PRE_COMMIT_LEAK_REVIEW) -> 1 (INVESTIGATION): サイクル完了 (CYCLE_COMPLETE) -->
+        <path id="edge-7-1" class="edge-path" d="M 500 285 C 260 360, 105 340, 105 130" stroke="#3fb950" stroke-dasharray="4, 4" marker-end="url(#arrow-green)"></path>
+        <text x="310" y="355" fill="#3fb950" font-size="10" font-weight="600" text-anchor="middle">コミット完了・次サイクルへ (CYCLE_COMPLETE)</text>
+
+        <!-- ノード群 (Core 7 + HUMAN_DECISION) -->
         <g id="node-investigation" class="node-group" onclick="selectNode('investigation')" transform="translate(20, 50)">
-          <rect class="node-box" width="170" height="80"></rect>
-          <text class="node-title" x="14" y="32">1. investigation</text>
-          <text class="node-sub" x="14" y="52">課題・事実調査</text>
+          <rect class="node-box" width="175" height="80"></rect>
+          <text class="node-tier-tag frontier" x="14" y="20">FRONTIER • READ_ONLY</text>
+          <text class="node-title" x="14" y="38">1. INVESTIGATION</text>
+          <text class="node-sub" x="14" y="54">課題・事実調査 & 仮説分離</text>
           <text class="node-sub" x="14" y="68">Go AST / log/slog 解析</text>
         </g>
 
         <g id="node-tracer_bullet" class="node-group" onclick="selectNode('tracer_bullet')" transform="translate(260, 50)">
-          <rect class="node-box" width="170" height="80"></rect>
-          <text class="node-title" x="14" y="32">2. tracer_bullet</text>
-          <text class="node-sub" x="14" y="52">最小E2E開通 & 契約固定</text>
-          <text class="node-sub" x="14" y="68">単一ファイル直書き (app.Run)</text>
+          <rect class="node-box" width="175" height="80"></rect>
+          <text class="node-tier-tag standard" x="14" y="20">STANDARD • WORKSPACE_MUTATE</text>
+          <text class="node-title" x="14" y="38">2. TRACER_BULLET</text>
+          <text class="node-sub" x="14" y="54">最小E2E開通 & 契約固定</text>
+          <text class="node-sub" x="14" y="68">直書きモノリス (app.Run)</text>
         </g>
 
         <g id="node-test_first" class="node-group" onclick="selectNode('test_first')" transform="translate(500, 50)">
-          <rect class="node-box" width="170" height="80"></rect>
-          <text class="node-title" x="14" y="32">3. test_first</text>
-          <text class="node-sub" x="14" y="52">パッケージ分割 & PBT</text>
+          <rect class="node-box" width="175" height="80"></rect>
+          <text class="node-tier-tag standard" x="14" y="20">STANDARD • WORKSPACE_MUTATE</text>
+          <text class="node-title" x="14" y="38">3. TEST_FIRST</text>
+          <text class="node-sub" x="14" y="54">パッケージ分割 & PBT不変条件</text>
           <text class="node-sub" x="14" y="68">複数パッケージ横断CLIテスト</text>
         </g>
 
         <g id="node-review" class="node-group" onclick="selectNode('review')" transform="translate(740, 50)">
-          <rect class="node-box" width="170" height="80"></rect>
-          <text class="node-title" x="14" y="32">4. review</text>
-          <text class="node-sub" x="14" y="52">並行性・静的解析</text>
-          <text class="node-sub" x="14" y="68">go test -race / staticcheck</text>
+          <rect class="node-box" width="175" height="80"></rect>
+          <text class="node-tier-tag frontier" x="14" y="20">FRONTIER • READ_ONLY</text>
+          <text class="node-title" x="14" y="38">4. REVIEW</text>
+          <text class="node-sub" x="14" y="54">敵対的セルフレビュー (YAGNI)</text>
+          <text class="node-sub" x="14" y="68">Negative Quota / Kill-Keep-Fix</text>
         </g>
 
         <g id="node-architecture" class="node-group" onclick="selectNode('architecture')" transform="translate(970, 50)">
           <rect class="node-box" width="150" height="80"></rect>
-          <text class="node-title" x="14" y="32">5. architecture</text>
-          <text class="node-sub" x="14" y="52">Drift 判定 & ガバナンス</text>
-          <text class="node-sub" x="14" y="68">単方向依存・循環参照防止</text>
+          <text class="node-tier-tag frontier" x="14" y="20">FRONTIER • MUTATE</text>
+          <text class="node-title" x="14" y="38">5. ARCHITECTURE</text>
+          <text class="node-sub" x="14" y="54">Drift 判定 & ガバナンス</text>
+          <text class="node-sub" x="14" y="68">単方向依存・循環参照検証</text>
         </g>
 
-        <g id="node-stop" class="node-group stop" onclick="selectNode('stop')" transform="translate(970, 180)">
-          <rect class="node-box" width="150" height="60"></rect>
-          <text class="node-title" x="14" y="28" fill="#f85149">⛔ [STOP] ADR提案</text>
-          <text class="node-sub" x="14" y="46">STRUCTURAL_ADJUST</text>
+        <g id="node-human_decision" class="node-group stop" onclick="selectNode('human_decision')" transform="translate(970, 180)">
+          <rect class="node-box" width="150" height="64"></rect>
+          <text class="node-tier-tag gate" x="14" y="18">HUMAN GATE • TERMINAL_HALT</text>
+          <text class="node-title" x="14" y="36" fill="#f85149">⛔ HUMAN_DECISION</text>
+          <text class="node-sub" x="14" y="52">STRUCTURAL_ADJUST STOP</text>
         </g>
 
-        <g id="node-dead_code_cleanup" class="node-group" onclick="selectNode('dead_code_cleanup')" transform="translate(740, 230)">
-          <rect class="node-box" width="170" height="80"></rect>
-          <text class="node-title" x="14" y="32">6. dead_code_cleanup</text>
-          <text class="node-sub" x="14" y="52">デッドコード刈り取り</text>
-          <text class="node-sub" x="14" y="68">deadcode / unused 削除</text>
+        <g id="node-dead_code_cleanup" class="node-group" onclick="selectNode('dead_code_cleanup')" transform="translate(740, 245)">
+          <rect class="node-box" width="175" height="80"></rect>
+          <text class="node-tier-tag standard" x="14" y="20">STANDARD • WORKSPACE_MUTATE</text>
+          <text class="node-title" x="14" y="38">6. DEAD_CODE_CLEANUP</text>
+          <text class="node-sub" x="14" y="54">デッドコード刈り取り</text>
+          <text class="node-sub" x="14" y="68">deadcode 削除 & 回帰証明</text>
         </g>
 
-        <g id="node-pre_commit_leak_review" class="node-group" onclick="selectNode('pre_commit_leak_review')" transform="translate(500, 230)">
-          <rect class="node-box" width="170" height="80"></rect>
-          <text class="node-title" x="14" y="32">7. pre_commit_leak</text>
-          <text class="node-sub" x="14" y="52">コミット前リーク検査</text>
-          <text class="node-sub" x="14" y="68">秘密情報・環境依存走査</text>
+        <g id="node-pre_commit_leak_review" class="node-group" onclick="selectNode('pre_commit_leak_review')" transform="translate(500, 245)">
+          <rect class="node-box" width="175" height="80"></rect>
+          <text class="node-tier-tag routine" x="14" y="20">ROUTINE • READ_ONLY</text>
+          <text class="node-title" x="14" y="38">7. PRE_COMMIT_LEAK</text>
+          <text class="node-sub" x="14" y="54">コミット前秘密・パス検査</text>
+          <text class="node-sub" x="14" y="68">準公開サマリ・漏洩ゼロ保証</text>
         </g>
       </svg>
     </div>
   </section>
 
-  <!-- 中間: 操作コントロールバー (適応型マルチウェイルーティング) -->
-  <section class="controls-bar" style="flex-direction: column; align-items: stretch; gap: 10px;">
-    <!-- 1行目: タスク種別シナリオ (Archetypes) -->
+  <!-- 中間: 操作コントロールバー (評価ハーネス & 適応型ルーティング) -->
+  <section class="controls-bar">
+    <!-- 0行目: 人間が操作可能な実行モードレバー (Execution Mode Profiles) -->
+    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 8px; flex-wrap: wrap; gap: 8px;">
+      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+        <span style="font-size: 11px; font-weight: 700; color: #f0f6fc; text-transform: uppercase; letter-spacing: 0.5px;">
+          🎛️ 実行モードレバー (Human Lever):
+        </span>
+        <button class="archetype-btn" id="prof-economy" onclick="setProfile('economy')" style="color: #7ee787;">
+          ⚡ ECONOMY (シングルエージェント固定・トークン節約)
+        </button>
+        <button class="archetype-btn active" id="prof-balanced" onclick="setProfile('balanced')" style="color: #58a6ff;">
+          ⚖️ BALANCED (ハイブリッド標準)
+        </button>
+        <button class="archetype-btn" id="prof-deep_parallel" onclick="setProfile('deep_parallel')" style="color: #bc8cff;">
+          🚀 DEEP PARALLEL (最大並行探索・コンペ)
+        </button>
+      </div>
+      <div id="profileDesc" style="font-size: 11px; color: var(--text-muted);">
+        ハイブリッド標準: 実装はシングル、不確実性大の調査/レビューのみFan-out。
+      </div>
+    </div>
+
+    <!-- 1行目: 代表シミュレーションシナリオ (Deterministic Eval Scenarios) -->
     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
       <span style="font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">
-        🎯 タスク開始シナリオ:
+        🧪 評価シナリオ:
       </span>
-      <button class="archetype-btn active" id="scen-full" onclick="setScenario('full')">🚀 新機能・不確実性大 (Full Loop: 1→2→3→4→5→6→7)</button>
-      <button class="archetype-btn" id="scen-bugfix" onclick="setScenario('bugfix')">🐛 既知バグ・テスト拡充 (Short Path: 1→3→4)</button>
-      <button class="archetype-btn" id="scen-spike" onclick="setScenario('spike')">🏛️ 設計検証・Spike (1→5→2→4)</button>
-      <button class="archetype-btn" id="scen-audit" onclick="setScenario('audit')">🔍 監査・リファクタ (1→4→6)</button>
+      <button class="archetype-btn active" id="scen-happy" onclick="setScenario('happy')">🚀 S1: Happy Path</button>
+      <button class="archetype-btn" id="scen-backedge" onclick="setScenario('backedge')">↩️ S2: Review Back-Edge</button>
+      <button class="archetype-btn" id="scen-halt" onclick="setScenario('halt')">⛔ S3: Drift STOP</button>
+      <button class="archetype-btn" id="scen-economy" onclick="setScenario('economy')">⚡ S5: Economy Fallback</button>
+      <button class="archetype-btn" id="scen-fanout" onclick="setScenario('fanout')">🌐 S6: 並行調査 (Fan-in)</button>
+      <button class="archetype-btn" id="scen-arbiter" onclick="setScenario('arbiter')">🏆 S7: Tracerコンペ (Arbiter)</button>
+      <button class="archetype-btn" id="scen-review" onclick="setScenario('review')">🛡️ S8: 専門家レビュー</button>
     </div>
 
     <!-- 2行目: 現在の状態からの動的遷移先 -->
     <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--border); padding-top: 8px;">
       <div class="status-pill" style="margin-left: 0; margin-right: 8px;">
-        <span class="status-dot"></span>
-        <span>現在地: <strong id="lblCurrent" style="color: #58a6ff;">investigation</strong></span>
+        <span class="status-dot" id="statusDot"></span>
+        <span>現在地: <strong id="lblCurrent" style="color: #58a6ff;">INVESTIGATION</strong></span>
       </div>
-      <span style="font-size: 11px; color: var(--text-muted);">👉 遷移可能な次のアクション:</span>
+      <span style="font-size: 11px; color: var(--text-muted);">👉 許可された遷移先 (Canonical Edges):</span>
       <div id="dynamicNextButtons" style="display: flex; gap: 6px; flex-wrap: wrap;">
         <!-- JSで動的生成 -->
       </div>
@@ -557,13 +634,16 @@
   <section class="detail-section">
     <div class="detail-header">
       <div>
-        <div class="detail-title" id="dTitle">2. tracer_bullet (最小E2E開通 & 契約固定)</div>
+        <div class="detail-title">
+          <span id="dTitle">2. TRACER_BULLET</span>
+          <span id="dTierBadge" class="pkg-tag tier-standard">Tier: Standard</span>
+          <span id="dPermBadge" class="pkg-tag">WORKSPACE_MUTATE</span>
+          <span id="dTopologyBadge" class="pkg-tag" style="background: rgba(188,140,255,0.15); color: #bc8cff; border-color: rgba(188,140,255,0.4);">Topology: Hybrid</span>
+        </div>
         <div class="detail-desc" id="dDesc">外部契約 (CLI/API) をインプロセス結合テストで先行固定し、最小の貫通パスを実装する。</div>
       </div>
       <div id="dBadges" class="pkg-badges">
-        <span class="pkg-tag">testing</span>
-        <span class="pkg-tag">bytes</span>
-        <span class="pkg-tag">app.Run</span>
+        <!-- JSで生成 -->
       </div>
     </div>
 
@@ -577,11 +657,15 @@
       <!-- JSで動的生成 -->
     </div>
 
-    <!-- メタ情報カード (検証コマンド & ガードレール) -->
+    <!-- メタ情報カード (検証コマンド & ガードレール & Evidence Graph) -->
     <div class="meta-grid">
       <div class="meta-card">
         <h4>必須検証コマンド (Verify)</h4>
         <div id="dVerify"><code>go test -run TestCLI_TracerBullet -v</code></div>
+      </div>
+      <div class="meta-card">
+        <h4>検証レベル (Verification Level)</h4>
+        <div id="dVerifLevel"><code>LOCAL_RUNTIME</code> (In-process Contract Test)</div>
       </div>
       <div class="meta-card">
         <h4>アーキテクチャ制約 (Guardrail)</h4>
@@ -597,9 +681,15 @@
   <script>
     const STATE_DATA = {
       investigation: {
-        title: "1. investigation (課題・事実調査 & 現行境界特定)",
+        title: "1. INVESTIGATION (課題・事実調査 & 現行境界特定)",
+        tier: "frontier",
+        perm: "READ_ONLY",
+        topology: "MULTI_AGENT_FAN_OUT",
+        fanInPolicy: "FACT_UNION",
+        subagents: ["code_ast_inspector", "log_history_analyst", "external_doc_researcher"],
+        verifLevel: "LOCAL_STATIC (Go AST / Dependencies Scan)",
         desc: "推測でのコード変更を厳禁。AST・ログ・依存関係を収集して事実と仮説を分離する。",
-        badges: ["log/slog", "go/parser", "golang.org/x/tools/go/packages"],
+        badges: ["log/slog", "go/parser", "golang.org/x/tools/go/packages", "Fan-out/Fan-in", "PROMPT_DEEPENING Safe"],
         verify: "go vet ./... && go list -json ./...",
         guard: "ファイルの書き換えを禁止。観察可能な境界と入出力を確定する。",
         pkgs: "log/slog, go/ast, go/parser",
@@ -608,8 +698,8 @@
             id: "ast_inspect",
             name: "🔍 AST・契約境界走査",
             type: "code",
-            label: "Go AST Scanner",
-            content: `// Investigation: AST走査による公開シンボルとシグネチャの事実確定
+            label: "Go AST Scanner (LOCAL_STATIC)",
+            content: `// INVESTIGATION: AST走査による公開シンボルとシグネチャの事実確定
 package main
 
 import (
@@ -650,13 +740,35 @@ func InspectPublicAPI(filePath string) error {
 
 ## 未知変数 (Unknowns)
 - 巨大JSONパース時のメモリ制約（ストリーム処理が必要か否か）。`
+          },
+          {
+            id: "fanin_facts",
+            name: "🌐 Subagent 並行調査 (Fan-in 合約)",
+            type: "terminal",
+            label: "tests/evaluation/eval_harness.py - Scenario 6",
+            content: `<span class="term-cmd">$ python3 tests/evaluation/eval_harness.py</span>
+test_scenario_6_parallel_investigation_fanout_fanin (__main__.EvaluationHarnessScenarios) ...
+<span style="color: #bc8cff; font-weight: bold;">[FAN-OUT DISPATCH]</span> Subagents spawned: 3 roles (Profile: BALANCED)
+  • code_ast_inspector: Fact {ast: "packages.Load verified domain purity"}
+  • log_history_analyst: Fact {logs: "observed 0 regressions in git log -n 50"}
+  • external_doc_researcher: Fact {docs: "standard Go 1.22+ structured logging"}
+<span style="color: #79c0ff; font-weight: bold;">[FAN-IN REDUCER: FACT_UNION]</span>
+  - Deduplicated facts: 3 unique items gathered.
+  - Unknowns unified: ["memory footprint under 1GB batch payload"]
+--- <span class="term-pass">ok (INVARIANT VERIFIED: 0 REDUNDANT CALLS)</span>`
           }
         ]
       },
       tracer_bullet: {
-        title: "2. tracer_bullet (契約先行ロック & 単一ファイル直書き最小開通)",
+        title: "2. TRACER_BULLET (契約先行ロック & 単一ファイル直書き最小開通)",
+        tier: "standard",
+        perm: "WORKSPACE_MUTATE",
+        topology: "HYBRID_COMPETITIVE",
+        fanInPolicy: "ARBITRATION_BY_CONTRACT",
+        subagents: ["tracer_spike_worker"],
+        verifLevel: "LOCAL_RUNTIME (In-process app.Run Test)",
         desc: "外部契約 (CLI/API) をインプロセス結合テストで先行固定。初期のパッケージ分割をあえて行わず、1ファイル（cmd/app/app.go）で最短開通させる。",
-        badges: ["testing", "bytes", "io", "app.Run", "単一ファイル直書き"],
+        badges: ["testing", "bytes", "io", "app.Run", "Branch Spikes", "Arbiter", "単一ファイル直書き"],
         verify: "go test -run TestCLI_TracerBullet_ContractLock -v",
         guard: "過度な共通化やレイヤ分割を禁止。最小の技術パスを素通しする。",
         pkgs: "testing, bytes, strings, myapp/cmd/app",
@@ -720,7 +832,7 @@ type Response struct {
 
 // Run: インプロセスで実行可能なエントリーポイント (入出力を直結)
 func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
-    // パッケージ分割は次の 'test_first' で実施。ここでは最短で契約テストを通す
+    // パッケージ分割は次の 'TEST_FIRST' で実施。ここでは最短で契約テストを通す
     resp := Response{
         Status: "ok",
         Result: "tracer_bullet_connected",
@@ -736,7 +848,7 @@ func Run(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
             id: "test_run",
             name: "🧪 統合テスト実行 (最小開通ログ)",
             type: "terminal",
-            label: "Terminal Execution Log",
+            label: "Terminal Execution Log (Evidence Claim)",
             content: `<span class="term-cmd">$ go test -v ./tests/integration/... -run TestCLI_TracerBullet</span>
 === RUN   TestCLI_TracerBullet_ContractLock
 === CLI Contract Encompassed Packages ===
@@ -746,15 +858,40 @@ tests/integration/cli_contract_test.go
     cli_contract_test.go:21: contract locked: exit_code=0, payload validated
 <span class="term-pass">PASS</span>
 ok      myapp/tests/integration 0.018s`
+          },
+          {
+            id: "arbiter_comp",
+            name: "🏆 自動調停 Arbiter コンペ結果",
+            type: "terminal",
+            label: "tools/orchestrator/arbiter.py (Evidence Graph)",
+            content: `<span class="term-cmd">$ python3 tools/orchestrator/arbiter.py --candidates spike_a,spike_b</span>
+[ORCHESTRATOR ARBITER] Evaluating 2 competing tracer spikes...
+Evaluating candidate 'spike_a' (Branch: spike/branch-a):
+  - Contract Tests: 5/5 PASSED (100.0%)
+  - Diff Impact: +38 lines
+  - Drift Classification: NO_CHANGE
+Evaluating candidate 'spike_b' (Branch: spike/branch-b):
+  - Contract Tests: 3/5 PASSED (60.0%)
+  - Diff Impact: +142 lines
+  - Drift Classification: STRUCTURAL_ADJUST (Broke single-file constraint)
+
+<span class="term-pass">[WINNER SELECTED: spike_a]</span> Score: 100.0 (Minimal diff, zero drift, 100% contract pass).
+Promoting winner spike_a to TEST_FIRST.`
           }
         ]
       },
       test_first: {
-        title: "3. test_first (パッケージ分割 & 複数パッケージ横断CLI統合テスト)",
+        title: "3. TEST_FIRST (パッケージ分割 & 複数パッケージ横断CLI統合テスト)",
+        tier: "standard",
+        perm: "WORKSPACE_MUTATE",
+        topology: "SINGLE_AGENT",
+        fanInPolicy: "NOT_APPLICABLE",
+        subagents: [],
+        verifLevel: "LOCAL_RUNTIME (Multi-Package CLI & rapid PBT)",
         desc: "直書きコードを責務別にパッケージ分割（cmd → domain → adapter）。複数パッケージを跨ぐCLI統合テストで全体の契約を保護する。",
-        badges: ["cmd/app", "internal/domain", "internal/adapter", "Cross-Package CLI", "rapid PBT"],
+        badges: ["cmd/app", "internal/domain", "internal/adapter", "Cross-Package CLI", "Single-Agent Mutate", "rapid PBT"],
         verify: "go test -tags=rapid -race ./... -v",
-        guard: "複数パッケージへ分割後も、最上位のCLI統合契約テストが100%パスし続けること。",
+        guard: "複数パッケージへ分割後も、最上位のCLI統合契約テストが100%パスし続けること。競合防止のためSingle-Agentで直列実装する。",
         pkgs: "myapp/cmd/app, myapp/internal/domain, myapp/internal/adapter, rapid",
         tabs: [
           {
@@ -879,13 +1016,33 @@ func TestProperty_EncoderDecoderRoundtrip(t *testing.T) {
         ]
       },
       review: {
-        title: "4. review (並行性・静的解析・差し戻し Back Edge)",
-        desc: "go test -race による競合検査、staticcheck、変更波及範囲を評価。欠陥時は Tracer へ差し戻す。",
-        badges: ["go test -race", "staticcheck", "sync", "Back Edge"],
+        title: "4. REVIEW (敵対的セルフレビュー & YAGNI刈り取り)",
+        tier: "frontier",
+        perm: "READ_ONLY",
+        topology: "MULTI_AGENT_FAN_OUT",
+        fanInPolicy: "RISK_LEDGER_MERGE",
+        subagents: ["concurrency_race_reviewer", "security_permission_reviewer", "architecture_boundary_reviewer"],
+        verifLevel: "LOCAL_RUNTIME (go test -race & staticcheck)",
+        desc: "悪魔の代弁者プロトコルで現状追認・自己正当化を禁止。Negative Quota（最低2点）でYAGNI・過剰設計を特定し、Kill/Keep/Fixリストで直ちに刈り取りへ渡す。",
+        badges: ["Devil's Advocate", "Negative Quota >=2", "Hard Boundary", "YAGNI Guardrail", "Kill/Keep/Fix", "Back Edge Trigger"],
         verify: "go test -race ./... && staticcheck ./...",
-        guard: "欠陥発見時は場当たりパッチを禁止し、tracer_bullet へ差し戻す。",
+        guard: "自己承認・褒めることを禁止。YAGNI違反や脆さを特定し、直ちにDEAD_CODE_CLEANUPまたはTRACER_BULLETへ渡す。",
         pkgs: "sync, context, golang.org/x/sync/errgroup",
         tabs: [
+          {
+            id: "adversarial_checklist",
+            name: "👿 敵対的セルフレビュー (Kill / Keep / Fix)",
+            type: "terminal",
+            label: "Adversarial Self-Review (Devil's Advocate Protocol)",
+            content: `### 👿 Adversarial Self-Review (Negative Quota: 2 findings required)
+- **Contract Health**: <span class="term-pass">PASS (In-process app.Run Locked)</span>
+- **Kill (削除・インライン化候補 - 2件検出)**:
+  1. \`internal/service/converter.go:45\`: [YAGNI] 1箇所でしか呼ばれない不要な中間ラッパー \`legacyDeprecatedFallbackWrapper\` を削除・インライン化。
+  2. \`internal/adapter/mock_test.go:12\`: [OVER-TEST] プライベート実装に過剰結合した不要なモックテストを削除。外部契約テストのみで担保可能。
+- **Fix (契約保護・脆さ対策 - 1件)**:
+  - \`cmd/app/app.go:88\`: 空ペイロード時の終了コード 1 を愚直な if 文で補強。
+- **Action**: <span style="color: #7ee787; font-weight: bold;">[TRIGGER_CLEANUP -> 6. DEAD_CODE_CLEANUP]</span>`
+          },
           {
             id: "race_test",
             name: "⚡ 並行性競合テスト (-race)",
@@ -911,27 +1068,49 @@ func TestWorkerPool_ConcurrencySafety(t *testing.T) {
             id: "defect_found",
             name: "↩ 欠陥発見時の差し戻し (Back Edge)",
             type: "terminal",
-            label: "Race Detector Output",
+            label: "Race Detector Output (DEFECT_FOUND)",
             content: `<span class="term-cmd">$ go test -race ./internal/worker/...</span>
 ==================
 <span class="term-fail">WARNING: DATA RACE</span>
 Write at 0x00c0000a4080 by goroutine 7:
   myapp/internal/worker.(*Pool).Process()
-      /Users/yuta/dev/myapp/internal/worker/pool.go:42 +0x64
+      myapp/internal/worker/pool.go:42 +0x64
 ==================
 --- <span class="term-fail">FAIL</span>: TestWorkerPool_ConcurrencySafety (0.012s)
 <span class="term-fail">FAIL</span>
 
-<span style="color: #d29922; font-weight: bold;">[BACK EDGE TRIGGERED]</span>
-場当たり的な修正を中止し、tracer_bullet の契約テスト（スレッドセーフ契約）へ差し戻します。`
+<span style="color: #d29922; font-weight: bold;">[BACK EDGE TRIGGERED: DEFECT_FOUND]</span>
+場当たり的な修正を中止し、TRACER_BULLET の契約テスト（スレッドセーフ契約）へ差し戻します。`
+          },
+          {
+            id: "review_specialists",
+            name: "🛡️ 専門家レビュー合議 (Fan-in Risk Ledger)",
+            type: "terminal",
+            label: "tests/evaluation/eval_harness.py - Scenario 8",
+            content: `<span class="term-cmd">$ python3 tests/evaluation/eval_harness.py</span>
+test_scenario_8_specialist_review_merging (__main__.EvaluationHarnessScenarios) ...
+<span style="color: #bc8cff; font-weight: bold;">[FAN-OUT REVIEW]</span> Dispatched 3 specialist review subagents:
+  • concurrency_race_reviewer: Clean (go test -race clean)
+  • security_permission_reviewer: Clean (no credential leakage)
+  • architecture_boundary_reviewer: DEFECT_FOUND (Detected illegal import 'redis' in domain)
+<span style="color: #d29922; font-weight: bold;">[FAN-IN REDUCER: RISK_LEDGER_MERGE]</span>
+  - Defect count: 1 high-severity finding.
+  - Action: <span class="term-fail">AUTOMATIC BACK-EDGE TRIGGERED -> TRACER_BULLET</span>
+--- <span class="term-pass">ok (INVARIANT VERIFIED: DEFECT ROUTED TO CONTRACT LOCK)</span>`
           }
         ]
       },
       architecture: {
-        title: "5. architecture (ガバナンス & アーキテクチャ進化差分)",
+        title: "5. ARCHITECTURE (Drift判定 & アーキテクチャ進化差分)",
+        tier: "frontier",
+        perm: "WORKSPACE_MUTATE",
+        topology: "SINGLE_AGENT",
+        fanInPolicy: "NOT_APPLICABLE",
+        subagents: [],
+        verifLevel: "LOCAL_STATIC (AST Boundary & CLI Linter)",
         desc: "単方向依存 (CLI → Domain → Adapter) と循環参照の有無を判定。進化差分を可視化する。",
-        badges: ["golang.org/x/tools/go/packages", "ADR", "Clean Architecture"],
-        verify: "go run ./tools/cli_linter/lint_cli.py && go vet ./...",
+        badges: ["golang.org/x/tools/go/packages", "ADR", "Clean Architecture", "Breaking Drift Check"],
+        verify: "python3 tools/cli_linter/lint_cli.py && go vet ./...",
         guard: "STRUCTURAL_ADJUST (境界違反) は即座に STOP し、ADR を人間に提案する。",
         pkgs: "golang.org/x/tools/go/packages",
         tabs: [
@@ -973,12 +1152,18 @@ func TestArchitecture_DomainHasNoExternalDependencies(t *testing.T) {
           }
         ]
       },
-      stop: {
-        title: "⛔ [STOP] ガードレール発動 (人間への ADR 提案)",
-        desc: "既存のアーキテクチャ境界を破る変更を検知。コード実装を中断し、意思決定レコードを作成する。",
-        badges: ["ADR-00X", "HUMAN_DECISION", "GUARDRAIL_HALT"],
-        verify: "git diff && cat .agent/adr/ADR-PROPOSED.md",
-        guard: "人間の明示的合意なしに外部破壊的変更を進めることを禁止する。",
+      human_decision: {
+        title: "⛔ HUMAN_DECISION (ガードレール発動・ADR提案待ち)",
+        tier: "human_gate",
+        perm: "TERMINAL_HALT",
+        topology: "HUMAN_GATE",
+        fanInPolicy: "HUMAN_INSPECTION",
+        subagents: [],
+        verifLevel: "HUMAN_INSPECTION (Human Operator Gate)",
+        desc: "既存のアーキテクチャ境界を破る変更を検知。自動遷移を完全に停止し、意思決定レコード（ADR）を人間に提示する。",
+        badges: ["HUMAN_DECISION", "TERMINAL_HALT", "ADR-003-PROPOSED", "Zero-Side-Effects"],
+        verify: "git diff && cat .codex/reports/human-decisions.sample.jsonl",
+        guard: "人間の明示的合意なしに外部破壊的変更を進めることを禁止する（TerminalHaltReached）。",
         pkgs: "ADR, Markdown, Human Review",
         tabs: [
           {
@@ -1000,13 +1185,32 @@ func TestArchitecture_DomainHasNoExternalDependencies(t *testing.T) {
 
 ### 決定待ち:
 人間オペレーターが選択肢を承認するまで、エージェントはコード変更を行いません。`
+          },
+          {
+            id: "halt_log",
+            name: "🛑 評価シミュレータ停止証跡 (eval_harness)",
+            type: "terminal",
+            label: "tests/evaluation/eval_harness.py - Scenario 3",
+            content: `<span class="term-cmd">$ python3 tests/evaluation/eval_harness.py</span>
+test_scenario_3_structural_adjust_halt (__main__.EvaluationHarnessScenarios) ...
+<span style="color: #f85149; font-weight: bold;">[HALT AT HUMAN_DECISION]</span>
+Attempting automated transition to DEAD_CODE_CLEANUP...
+<span class="term-fail">RAISED TerminalHaltReached</span>: State machine is halted at HUMAN_DECISION (Human Gate).
+Cannot transition to DEAD_CODE_CLEANUP without human decision.
+--- <span class="term-pass">ok (INVARIANT VERIFIED)</span>`
           }
         ]
       },
       dead_code_cleanup: {
-        title: "6. dead_code_cleanup (ソースコード掃除Diff & 回帰テスト証明)",
+        title: "6. DEAD_CODE_CLEANUP (ソースコード掃除Diff & 回帰テスト証明)",
+        tier: "standard",
+        perm: "WORKSPACE_MUTATE",
+        topology: "SINGLE_AGENT",
+        fanInPolicy: "NOT_APPLICABLE",
+        subagents: [],
+        verifLevel: "LOCAL_RUNTIME (Zero-Regression Test Suite)",
         desc: "実装が安定した後、不要になった関数・重複ロジック・過剰な抽象化ラッパーを安全に刈り取る。",
-        badges: ["deadcode", "git diff", "Zero-Regression"],
+        badges: ["deadcode", "git diff", "Zero-Regression", "Refactor"],
         verify: "deadcode ./... && go test ./... (全件PASS)",
         guard: "DELETE / MERGE / INLINE / SIMPLIFY を適用し、既存のテスト契約を 100% 維持する。",
         pkgs: "golang.org/x/tools/cmd/deadcode",
@@ -1020,9 +1224,9 @@ func TestArchitecture_DomainHasNoExternalDependencies(t *testing.T) {
 <span class="diff-info">--- a/internal/service/converter.go</span>
 <span class="diff-info">+++ b/internal/service/converter.go</span>
 <span class="diff-info">@@ -32,22 +32,8 @@ func (s *Service) Convert(ctx context.Context, payload []byte) ([]byte, error) {</span>
-     if len(payload) == 0 {
-         return nil, ErrEmptyPayload
-     }
+      if len(payload) == 0 {
+          return nil, ErrEmptyPayload
+      }
 <span class="diff-del">-    // [DEAD CODE DELETE]: 初期プロトタイプ用の一時的なフォールバックラッパー</span>
 <span class="diff-del">-    res := s.legacyDeprecatedFallbackWrapper(payload)</span>
 <span class="diff-del">-    return res, nil</span>
@@ -1032,9 +1236,10 @@ func TestArchitecture_DomainHasNoExternalDependencies(t *testing.T) {
 <span class="diff-del">-func (s *Service) legacyDeprecatedFallbackWrapper(data []byte) []byte {</span>
 <span class="diff-del">-    slog.Debug("legacy wrapper invoked")</span>
 <span class="diff-del">-    return data</span>
+<span class="diff-del">-}</span>
 <span class="diff-add">+    // [SIMPLIFY / INLINE]: 中間ラッパーを廃止し直接ドメインモデルへ委譲</span>
 <span class="diff-add">+    return s.domainConverter.Transform(ctx, payload)</span>
- }`
+  }`
           },
           {
             id: "regression_proof",
@@ -1059,10 +1264,16 @@ func TestArchitecture_DomainHasNoExternalDependencies(t *testing.T) {
         ]
       },
       pre_commit_leak_review: {
-        title: "7. pre_commit_leak_review (コミット前リーク検査)",
+        title: "7. PRE_COMMIT_LEAK_REVIEW (コミット前リーク・秘密検査)",
+        tier: "routine",
+        perm: "READ_ONLY",
+        topology: "SINGLE_AGENT",
+        fanInPolicy: "NOT_APPLICABLE",
+        subagents: [],
+        verifLevel: "LOCAL_STATIC (Regex Scanner & AST Inspection)",
         desc: "git diff を走査し、秘密鍵、APIトークン、ローカル絶対パス、内部機密の混入をブロックする。",
-        badges: ["git diff --staged", "gitleaks", "pre-commit"],
-        verify: "git diff --staged && go test ./tests/integration/...",
+        badges: ["git diff --staged", "gitleaks", "準公開サマリ", "No-Leak"],
+        verify: "git diff --staged && python3 tests/evaluation/eval_harness.py",
         guard: "ローカル環境の絶対パスや認証情報の漏洩がないことをコミット直前に保証する。",
         pkgs: "regexp, os/exec, gitleaks",
         tabs: [
@@ -1101,191 +1312,102 @@ func main() {
             id: "leak_verify_run",
             name: "🛡️ コミット前最終検査ログ",
             type: "terminal",
-            label: "Terminal Pre-Commit Check",
-            content: `<span class="term-cmd">$ go run ./tools/pre_commit_leak_check.go && git status -s</span>
+            label: "Terminal Pre-Commit Check (Evidence Graph v2)",
+            content: `<span class="term-cmd">$ make test && make eval && git status -s</span>
+✅ 16 integration tests passing (0.54s).
+✅ 4 evaluation scenarios passing (0.00s).
 ✅ No secrets, local paths, or tokens found in staged diff.
-✅ All 8 integration tests passing (0.049s).
 
-M  cmd/app/app.go
-M  internal/service/converter.go
-A  tests/integration/cli_contract_test.go
+M  Makefile
+M  tools/cli_linter/lint_cli.py
+M  .codex/AGENTS.md
+A  capabilities/tiers.json
+A  graph/canonical_graph.json
+A  tests/evaluation/eval_harness.py
 
-<span class="term-pass">[READY FOR COMMIT]</span> コミット準備が完了しました。`
+<span class="term-pass">[READY FOR COMMIT: CYCLE_COMPLETE]</span> コミット準備が完了しました。`
           }
         ]
       }
     };
 
-    const SEQUENCE = [
-      "investigation",
-      "tracer_bullet",
-      "test_first",
-      "review",
-      "architecture",
-      "dead_code_cleanup",
-      "pre_commit_leak_review"
-    ];
-
-    let currentIndex = 0;
-    let currentKey = "tracer_bullet";
-    let currentTabId = "";
-
-    function updateUI(key) {
-      currentKey = key;
-      document.getElementById("lblCurrent").textContent = key;
-
-      // ノード選択スタイル更新
-      document.querySelectorAll(".node-group").forEach(el => el.classList.remove("active"));
-      const activeEl = document.getElementById("node-" + key);
-      if (activeEl) activeEl.classList.add("active");
-
-      // エッジアニメーション更新
-      document.querySelectorAll(".edge-path").forEach(el => el.classList.remove("active-flow"));
-      if (key === "tracer_bullet") {
-        document.getElementById("edge-1-2").classList.add("active-flow");
-      } else if (key === "test_first") {
-        document.getElementById("edge-2-3").classList.add("active-flow");
-      } else if (key === "review") {
-        document.getElementById("edge-3-4").classList.add("active-flow");
-      } else if (key === "architecture") {
-        document.getElementById("edge-4-5").classList.add("active-flow");
-      } else if (key === "dead_code_cleanup") {
-        document.getElementById("edge-5-6").classList.add("active-flow");
-      } else if (key === "pre_commit_leak_review") {
-        document.getElementById("edge-6-7").classList.add("active-flow");
-      } else if (key === "stop") {
-        document.getElementById("edge-stop").classList.add("active-flow");
-      }
-
-      // 詳細ヘッダー更新
-      const data = STATE_DATA[key] || STATE_DATA["tracer_bullet"];
-      document.getElementById("dTitle").textContent = data.title;
-      document.getElementById("dDesc").textContent = data.desc;
-      document.getElementById("dVerify").innerHTML = "<code>" + data.verify + "</code>";
-      document.getElementById("dGuard").textContent = data.guard;
-      document.getElementById("dPkgs").innerHTML = "<code>" + data.pkgs + "</code>";
-
-      // バッジ更新
-      const bContainer = document.getElementById("dBadges");
-      bContainer.innerHTML = "";
-      data.badges.forEach(b => {
-        const span = document.createElement("span");
-        span.className = "pkg-tag";
-        span.textContent = b;
-        bContainer.appendChild(span);
-      });
-
-      // サブタブ生成
-      const tabBar = document.getElementById("subTabBar");
-      tabBar.innerHTML = "";
-      if (data.tabs && data.tabs.length > 0) {
-        currentTabId = data.tabs[0].id;
-        data.tabs.forEach((tab, index) => {
-          const btn = document.createElement("button");
-          btn.className = "tab-btn" + (index === 0 ? " active" : "");
-          btn.textContent = tab.name;
-          btn.onclick = () => switchTab(tab.id);
-          tabBar.appendChild(btn);
-        });
-        renderTabContent(data.tabs[0]);
-      }
-    }
-
-    function switchTab(tabId) {
-      currentTabId = tabId;
-      const data = STATE_DATA[currentKey];
-      document.querySelectorAll(".tab-btn").forEach(btn => {
-        btn.classList.toggle("active", btn.textContent.includes(data.tabs.find(t => t.id === tabId).name));
-      });
-      const selected = data.tabs.find(t => t.id === tabId);
-      if (selected) renderTabContent(selected);
-    }
-
-    function renderTabContent(tab) {
-      const container = document.getElementById("contentContainer");
-      container.innerHTML = "";
-
-      if (tab.type === "arch_diff") {
-        // アーキテクチャ進化差分図 (Before / After)
-        container.innerHTML = `
-          <div class="arch-compare-container">
-            <div class="arch-card before">
-              <h4><span>⚠️ 初期アーキテクチャ (Before: 結合・Driftリスク)</span></h4>
-              <div style="margin-top: 8px; font-family: monospace; line-height: 1.6; color: #ffa198;">
-                [ CLI / UI ]<br>
-                &nbsp;&nbsp;│<br>
-                &nbsp;&nbsp;▼ (直接呼出)<br>
-                [ Domain 層 ] ──(密結合・逆流)──▶ [ 外部 Redis / DB ]
-              </div>
-              <p style="margin-top: 8px; color: var(--text-muted); font-size: 11px;">
-                問題点: Domain層が外部インフラに直接依存し、単方向原則違反（STRUCTURAL_ADJUST の原因）。
-              </p>
-            </div>
-            <div class="arch-card after">
-              <h4><span>✅ 進化したアーキテクチャ (After: 契約保護・依存性逆転)</span></h4>
-              <div style="margin-top: 8px; font-family: monospace; line-height: 1.6; color: #7ee787;">
-                [ CLI / UI ]<br>
-                &nbsp;&nbsp;│<br>
-                &nbsp;&nbsp;▼ (インプロセス契約)<br>
-                [ Domain 層 (Port: Repository Interface) ]<br>
-                &nbsp;&nbsp;▲<br>
-                &nbsp;&nbsp;│ (依存性逆転 DI)<br>
-                [ Adapter 層 (Redis / Postgres 実装) ]
-              </div>
-              <p style="margin-top: 8px; color: var(--text-muted); font-size: 11px;">
-                進化ポイント: Interface Inversion により、Domain 層の不変条件と単方向依存を完全保護。
-              </p>
-            </div>
-          </div>
-        `;
-      } else {
-        // コード / ターミナル / Diff 表示
-        const box = document.createElement("div");
-        box.className = "code-box";
-        box.innerHTML = `<span class="code-label">${tab.label}</span><pre>${tab.content}</pre>`;
-        container.appendChild(box);
-      }
-    }
-
+    // 14 Canonical Edges (Canonical Graph Manifest v2)
     const TRANSITIONS = {
       investigation: [
-        { target: "tracer_bullet", label: "→ 2. tracer_bullet (不確実性大・最小開通)", edge: "edge-1-2", style: "primary" },
-        { target: "test_first", label: "→ 3. test_first (既知パス・バグ修正)", edge: "edge-1-3", style: "cyan" },
-        { target: "architecture", label: "→ 5. architecture (大規模境界調査・Drift評価)", edge: "edge-1-5", style: "purple" },
-        { target: "review", label: "→ 4. review (コード監査・PRレビュー先行)", edge: null, style: "default" }
+        { target: "tracer_bullet", label: "→ 2. TRACER_BULLET (事実確定: FACTS_ESTABLISHED)", edge: "edge-1-2", style: "primary" },
+        { target: "test_first", label: "→ 3. TEST_FIRST (既知パス・バグ修正: KNOWN_PATH_BUGFIX)", edge: "edge-1-3", style: "cyan" },
+        { target: "architecture", label: "→ 5. ARCHITECTURE (大規模境界調査: LARGE_BOUNDARY_STUDY)", edge: "edge-1-5", style: "purple" },
+        { target: "review", label: "→ 4. REVIEW (コード監査先行: AUDIT_ONLY)", edge: "edge-1-4", style: "default" }
       ],
       tracer_bullet: [
-        { target: "test_first", label: "→ 3. test_first (パッケージ分割 & PBT拡張)", edge: "edge-2-3", style: "primary" },
-        { target: "investigation", label: "↩ investigation (未知変数再調査)", edge: null, style: "default" }
+        { target: "test_first", label: "→ 3. TEST_FIRST (契約固定: CONTRACT_LOCKED)", edge: "edge-2-3", style: "primary" },
+        { target: "investigation", label: "↩ INVESTIGATION (未知変数再調査)", edge: null, style: "default" }
       ],
       test_first: [
-        { target: "review", label: "→ 4. review (品質・並行性・境界検査)", edge: "edge-3-4", style: "primary" },
-        { target: "tracer_bullet", label: "↩ tracer_bullet (契約再定義)", edge: null, style: "warn" }
+        { target: "review", label: "→ 4. REVIEW (テスト拡充完了: TESTS_EXPANDED)", edge: "edge-3-4", style: "primary" },
+        { target: "tracer_bullet", label: "↩ TRACER_BULLET (契約再定義)", edge: null, style: "warn" }
       ],
       review: [
-        { target: "architecture", label: "→ 5. architecture (Drift判定・ガバナンス)", edge: "edge-4-5", style: "primary" },
-        { target: "tracer_bullet", label: "↩ tracer_bullet (欠陥発見 Back Edge)", edge: "edge-back", style: "warn" },
-        { target: "dead_code_cleanup", label: "→ 6. dead_code_cleanup (即時クリーンアップ)", edge: "edge-4-6", style: "green" }
+        { target: "architecture", label: "→ 5. ARCHITECTURE (品質クリア: QUALITY_CLEARED)", edge: "edge-4-5", style: "primary" },
+        { target: "tracer_bullet", label: "↩ TRACER_BULLET (欠陥発見差し戻し: DEFECT_FOUND)", edge: "edge-back", style: "warn" },
+        { target: "dead_code_cleanup", label: "→ 6. DEAD_CODE_CLEANUP (即時クリーンアップ: CLEANUP_TRIGGERED)", edge: "edge-4-6", style: "green" }
       ],
       architecture: [
-        { target: "tracer_bullet", label: "→ 2. tracer_bullet (技術選定・ADRスパイク検証)", edge: "edge-5-2", style: "orange" },
-        { target: "dead_code_cleanup", label: "→ 6. dead_code_cleanup (NO_CHANGE/MINOR)", edge: "edge-5-6", style: "primary" },
-        { target: "stop", label: "⛔ [STOP] 人間へのADR提案 (STRUCTURAL_ADJUST)", edge: "edge-stop", style: "danger" }
+        { target: "tracer_bullet", label: "→ 2. TRACER_BULLET (技術選定スパイク: SPIKE_PROTOTYPE)", edge: "edge-5-2", style: "orange" },
+        { target: "dead_code_cleanup", label: "→ 6. DEAD_CODE_CLEANUP (境界維持・軽微更新: NO_CHANGE_OR_MINOR)", edge: "edge-5-6", style: "primary" },
+        { target: "human_decision", label: "⛔ HUMAN_DECISION (構造的変更: STRUCTURAL_ADJUST)", edge: "edge-stop", style: "danger" }
       ],
-      stop: [
+      human_decision: [
         { target: "investigation", label: "↺ 人間承認後: 再調査・実装開始", edge: null, style: "primary" },
-        { target: "tracer_bullet", label: "→ 2. tracer_bullet (承認ADR方針でスパイク)", edge: "edge-5-2", style: "orange" }
+        { target: "tracer_bullet", label: "→ 2. TRACER_BULLET (承認ADR方針でスパイク)", edge: "edge-5-2", style: "orange" }
       ],
       dead_code_cleanup: [
-        { target: "pre_commit_leak_review", label: "→ 7. pre_commit_leak (コミット前検査)", edge: "edge-6-7", style: "primary" },
-        { target: "test_first", label: "↩ test_first (回帰テスト拡充)", edge: null, style: "default" }
+        { target: "pre_commit_leak_review", label: "→ 7. PRE_COMMIT_LEAK (掃除完了: CLEANUP_DONE)", edge: "edge-6-7", style: "primary" },
+        { target: "test_first", label: "↩ TEST_FIRST (回帰テスト拡充)", edge: null, style: "default" }
       ],
       pre_commit_leak_review: [
-        { target: "investigation", label: "🎉 コミット完了・次のサイクルへ", edge: null, style: "primary" }
+        { target: "investigation", label: "🎉 コミット完了・次サイクルへ (CYCLE_COMPLETE)", edge: "edge-7-1", style: "primary" }
       ]
     };
 
-    let activeScenario = "full";
+    const PROFILES = {
+      economy: {
+        name: "ECONOMY",
+        desc: "シングルエージェント固定: 全ノードでSubagentを起動せず直列実行（トークン消費・APIコスト最小化）。",
+        allowSubagents: false,
+        maxWorkers: 1
+      },
+      balanced: {
+        name: "BALANCED",
+        desc: "ハイブリッド標準: 実装・刈り取りはSingle-Agent、不確実性大の調査/レビューのみFan-out。",
+        allowSubagents: true,
+        maxWorkers: 3
+      },
+      deep_parallel: {
+        name: "DEEP_PARALLEL",
+        desc: "最大並行探索: Tracerスパイクの並行コンペ、専門家レビューのFan-outをフル動員。",
+        allowSubagents: true,
+        maxWorkers: 5
+      }
+    };
+
+    let currentProfile = "balanced";
+    let currentKey = "investigation";
+    let currentTabId = "";
+
+    function setProfile(profileKey) {
+      if (!PROFILES[profileKey]) return;
+      currentProfile = profileKey;
+
+      document.querySelectorAll("[id^='prof-']").forEach(btn => btn.classList.remove("active"));
+      const activeBtn = document.getElementById("prof-" + profileKey);
+      if (activeBtn) activeBtn.classList.add("active");
+
+      const descEl = document.getElementById("profileDesc");
+      if (descEl) descEl.textContent = PROFILES[profileKey].desc;
+
+      transitionTo(currentKey, null);
+    }
 
     function selectNode(key) {
       transitionTo(key, null);
@@ -1293,7 +1415,14 @@ A  tests/integration/cli_contract_test.go
 
     function transitionTo(key, edgeId) {
       currentKey = key;
-      document.getElementById("lblCurrent").textContent = key;
+      document.getElementById("lblCurrent").textContent = key.toUpperCase();
+
+      const statusDot = document.getElementById("statusDot");
+      if (key === "human_decision") {
+        statusDot.className = "status-dot halted";
+      } else {
+        statusDot.className = "status-dot";
+      }
 
       // ノード選択スタイル更新
       document.querySelectorAll(".node-group").forEach(el => el.classList.remove("active"));
@@ -1312,8 +1441,43 @@ A  tests/integration/cli_contract_test.go
       document.getElementById("dTitle").textContent = data.title;
       document.getElementById("dDesc").textContent = data.desc;
       document.getElementById("dVerify").innerHTML = "<code>" + data.verify + "</code>";
+      document.getElementById("dVerifLevel").innerHTML = "<code>" + data.verifLevel + "</code>";
       document.getElementById("dGuard").textContent = data.guard;
       document.getElementById("dPkgs").innerHTML = "<code>" + data.pkgs + "</code>";
+
+      // Tier & Perm Badges
+      const tierBadge = document.getElementById("dTierBadge");
+      tierBadge.textContent = "Tier: " + (data.tier === "human_gate" ? "HUMAN GATE" : data.tier.toUpperCase());
+      tierBadge.className = "pkg-tag " + (data.tier === "human_gate" ? "gate-tag" : "tier-" + data.tier);
+
+      const permBadge = document.getElementById("dPermBadge");
+      permBadge.textContent = data.perm;
+      permBadge.className = "pkg-tag " + (data.perm === "TERMINAL_HALT" ? "gate-tag" : "");
+
+      // Topology Badge (Human Lever & Profile reactive)
+      const topoBadge = document.getElementById("dTopologyBadge");
+      if (topoBadge) {
+        let baseTopo = data.topology || "SINGLE_AGENT";
+        if (currentProfile === "economy" && (baseTopo === "MULTI_AGENT_FAN_OUT" || baseTopo === "HYBRID_COMPETITIVE")) {
+          topoBadge.textContent = "Topology: SINGLE_AGENT (Economy Fallback • Workers: 1)";
+          topoBadge.className = "pkg-tag tier-routine";
+        } else {
+          let workerCount = (data.subagents && data.subagents.length > 0) ? (data.subagents.length + 1) : 1;
+          if (currentProfile === "deep_parallel" && baseTopo === "HYBRID_COMPETITIVE") {
+            workerCount = 4; // 3 spike workers + 1 arbiter
+          }
+          topoBadge.textContent = "Topology: " + baseTopo + " (" + PROFILES[currentProfile].name + " • Workers: " + workerCount + ")";
+          if (baseTopo === "MULTI_AGENT_FAN_OUT") {
+            topoBadge.className = "pkg-tag tier-frontier";
+          } else if (baseTopo === "HYBRID_COMPETITIVE") {
+            topoBadge.className = "pkg-tag tier-standard";
+          } else if (baseTopo === "HUMAN_GATE") {
+            topoBadge.className = "pkg-tag gate-tag";
+          } else {
+            topoBadge.className = "pkg-tag";
+          }
+        }
+      }
 
       // バッジ更新
       const bContainer = document.getElementById("dBadges");
@@ -1344,6 +1508,60 @@ A  tests/integration/cli_contract_test.go
       renderDynamicTransitions(key);
     }
 
+    function switchTab(tabId) {
+      currentTabId = tabId;
+      const data = STATE_DATA[currentKey];
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.classList.toggle("active", btn.textContent.includes(data.tabs.find(t => t.id === tabId).name));
+      });
+      const selected = data.tabs.find(t => t.id === tabId);
+      if (selected) renderTabContent(selected);
+    }
+
+    function renderTabContent(tab) {
+      const container = document.getElementById("contentContainer");
+      container.innerHTML = "";
+
+      if (tab.type === "arch_diff") {
+        container.innerHTML = `
+          <div class="arch-compare-container">
+            <div class="arch-card before">
+              <h4><span>⚠️ 初期アーキテクチャ (Before: 密結合・Driftリスク)</span></h4>
+              <div style="margin-top: 8px; font-family: monospace; line-height: 1.6; color: #ffa198;">
+                [ CLI / UI ]<br>
+                &nbsp;&nbsp;│<br>
+                &nbsp;&nbsp;▼ (直接呼出)<br>
+                [ Domain 層 ] ──(密結合・逆流)──▶ [ 外部 Redis / DB ]
+              </div>
+              <p style="margin-top: 8px; color: var(--text-muted); font-size: 11px;">
+                問題点: Domain層が外部インフラに直接依存し、単方向原則違反（STRUCTURAL_ADJUST の原因）。
+              </p>
+            </div>
+            <div class="arch-card after">
+              <h4><span>✅ 進化したアーキテクチャ (After: 契約保護・依存性逆転)</span></h4>
+              <div style="margin-top: 8px; font-family: monospace; line-height: 1.6; color: #7ee787;">
+                [ CLI / UI ]<br>
+                &nbsp;&nbsp;│<br>
+                &nbsp;&nbsp;▼ (インプロセス契約)<br>
+                [ Domain 層 (Port: Repository Interface) ]<br>
+                &nbsp;&nbsp;▲<br>
+                &nbsp;&nbsp;│ (依存性逆転 DI)<br>
+                [ Adapter 層 (Redis / Postgres 実装) ]
+              </div>
+              <p style="margin-top: 8px; color: var(--text-muted); font-size: 11px;">
+                進化ポイント: Interface Inversion により、Domain 層の不変条件と単方向依存を完全保護。
+              </p>
+            </div>
+          </div>
+        `;
+      } else {
+        const box = document.createElement("div");
+        box.className = "code-box";
+        box.innerHTML = `<span class="code-label">${tab.label}</span><pre>${tab.content}</pre>`;
+        container.appendChild(box);
+      }
+    }
+
     function renderDynamicTransitions(key) {
       const container = document.getElementById("dynamicNextButtons");
       container.innerHTML = "";
@@ -1359,30 +1577,42 @@ A  tests/integration/cli_contract_test.go
     }
 
     function setScenario(scenKey) {
-      activeScenario = scenKey;
-      document.querySelectorAll(".archetype-btn").forEach(btn => btn.classList.remove("active"));
+      document.querySelectorAll(".archetype-btn").forEach(btn => {
+        if (btn.id.startsWith("scen-")) btn.classList.remove("active");
+      });
       const activeBtn = document.getElementById("scen-" + scenKey);
       if (activeBtn) activeBtn.classList.add("active");
 
-      if (scenKey === "bugfix") {
-        // 既知バグシナリオ: investigation から test_first へのショートカットを強調
-        transitionTo("investigation", "edge-1-3");
-      } else if (scenKey === "spike") {
-        // スパイクシナリオ: investigation から architecture への先行調査を強調
-        transitionTo("investigation", "edge-1-5");
-      } else if (scenKey === "audit") {
-        // 監査シナリオ: investigation から review へのショートカット
-        transitionTo("investigation", null);
-      } else {
+      if (scenKey === "happy") {
+        setProfile("balanced");
         transitionTo("investigation", "edge-1-2");
+      } else if (scenKey === "backedge") {
+        setProfile("balanced");
+        transitionTo("review", "edge-back");
+      } else if (scenKey === "halt") {
+        setProfile("balanced");
+        transitionTo("architecture", "edge-stop");
+      } else if (scenKey === "economy") {
+        setProfile("economy");
+        transitionTo("investigation", "edge-1-2");
+      } else if (scenKey === "fanout") {
+        setProfile("balanced");
+        transitionTo("investigation", null);
+      } else if (scenKey === "arbiter") {
+        setProfile("deep_parallel");
+        transitionTo("tracer_bullet", "edge-2-3");
+      } else if (scenKey === "review") {
+        setProfile("balanced");
+        transitionTo("review", "edge-back");
       }
     }
 
     function resetMachine() {
-      setScenario("full");
+      setScenario("happy");
+      transitionTo("investigation", null);
     }
 
-    // 初期化 (investigation から開始)
+    // 初期化
     transitionTo("investigation", null);
   </script>
 </body>

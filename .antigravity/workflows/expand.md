@@ -15,18 +15,16 @@ This workflow expands the "minimal working code (tracer bullet)" created in `/mi
    - **Autonomously run fast domain unit tests and in-process contract tests (Tier A) after every logical edit to maintain instant feedback and conserve tokens.**
    - *(Required skill: `.antigravity/skills/test-first/SKILL.md`)*
 
-2. **Self-Review and Fix Iteration (Defect Prevention)**
-   - Conduct a Defect Prevention Self-Review during implementation, focusing on:
-     - **Observability**: Ensure structured logs have proper context (no swallowed errors) and OpenTelemetry spans are correctly placed:
-       - **Go**: `log/slog` with contextual attributes.
-       - **Python**: `structlog` or standard `logging` with structured dictionary context.
-     - **Data**: Verify input validation (fail-fast) and data integrity (transaction boundaries, locks).
+2. **Adversarial Self-Review and YAGNI Cleanup Iteration**
+   - Conduct an **Adversarial Self-Review (Devil's Advocate Protocol)** after completing test expansion:
+     - **Inviolable Rules**: No self-congratulations ("LGTM" prohibited), enforce **Negative Quota** (identify >= 2 YAGNI / over-engineering / fragility points).
+     - **Hard Boundary, Lean Core**: Confirm public CLI contracts (Tier A: `app.Run`) are locked, and prune single-use interfaces, premature DI, or fragile internal mock tests.
      - **Concurrency & Async**:
-       - **Go**: Check for Goroutine data races (`go test -race`), deadlocks, and ensure channels/goroutines terminate cleanly.
-       - **Python**: Check for event loop blocking, unhandled task exceptions, thread safety, and async context manager cleanup.
-     - **CLI Drift & Linter**: Run the CLI contract linter to ensure no accidental breaking changes to flags, arguments, or schemas occurred.
-   - If issues are found, fix them immediately in small increments.
-   - (Note: If the user provided review comments when triggering the prompt, prioritize fixing those first.)
+       - **Go**: Check for Goroutine data races (`go test -race`), deadlocks, and ensure channels terminate cleanly.
+       - **Python**: Check for event loop blocking, unhandled task exceptions, thread safety, and async cleanup.
+     - **CLI Drift & Linter**: Run the CLI contract linter to guarantee backwards compatibility.
+   - Output minimal **Kill / Keep / Fix Checklist** (under 10 lines) and immediately invoke `.antigravity/skills/dead-code-cleanup/SKILL.md` to prune dead code.
+   - *(Required skills: `.antigravity/skills/review/SKILL.md`, `.antigravity/skills/dead-code-cleanup/SKILL.md`)*
 
 3. **Output Expansion Results and Stop**
    - Output the artifact using the `expand_result.md` format below (or compile the Interactive Walkthrough HTML `walkthrough.html`) and **STOP** working.

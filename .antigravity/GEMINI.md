@@ -22,12 +22,12 @@ stateDiagram-v2
     %% Forward Core Loop
     INVESTIGATION --> TRACER_BULLET: 事実確定 (FACTS_ESTABLISHED)
     TRACER_BULLET --> TEST_FIRST: 最小E2E開通 & 契約固定 (CONTRACT_LOCKED)
-    TEST_FIRST --> REVIEW: テスト拡張 & PBT不変条件 (TESTS_EXPANDED)
+    TEST_FIRST --> REVIEW: 敵対的セルフレビュー (TESTS_EXPANDED)
     REVIEW --> ARCHITECTURE: 品質クリア (QUALITY_CLEARED)
     
     %% Back Edge & Shortcuts
-    REVIEW --> TRACER_BULLET: 欠陥発見・差し戻し (DEFECT_FOUND)
-    REVIEW --> DEAD_CODE_CLEANUP: 即時クリーンアップ (CLEANUP_TRIGGERED)
+    REVIEW --> TRACER_BULLET: 欠陥発見・契約差し戻し (DEFECT_FOUND)
+    REVIEW --> DEAD_CODE_CLEANUP: YAGNI刈り取り (CLEANUP_TRIGGERED)
     INVESTIGATION --> TEST_FIRST: 既知パス修正 (KNOWN_PATH_BUGFIX)
     INVESTIGATION --> ARCHITECTURE: 大規模境界事前調査 (LARGE_BOUNDARY_STUDY)
     INVESTIGATION --> REVIEW: 監査のみ (AUDIT_ONLY)
@@ -53,8 +53,14 @@ Antigravity 2.0 equips the agent with first-class primitives: **Artifacts**, **S
 - **Executable Diagrams & Canvas Review**:
   - In `TRACER_BULLET` (contract locking) and `INVESTIGATION`, formulate Mermaid.js sequence or DAG diagrams directly inside Markdown Artifacts. Bind each path/node to a Scenario ID (e.g., `SCN-001-HAPPY-PATH`) or Component Identifier.
   - Review diagrams natively in Gemini Canvas without generating standalone HTML files, keeping the workflow clean and zero-overhead.
-- **Subagent Parallelism**:
-  - When investigating broad unfamiliar repositories or evaluating 2–3 competing technical approaches for a tracer bullet, spawn subagents with isolated workspaces (`share` or `branch`).
+- **Execution Mode Profiles (Human-Controllable Lever)**:
+  - **`ECONOMY` (Single-Agent Only)**: When the user requests token savings (`トークン節約モード`, `シングルエージェントで`), suppress subagents entirely. Execute all nodes sequentially on the primary agent to minimize cost and latency.
+  - **`BALANCED` (Default Hybrid)**: Keep implementation (`TEST_FIRST`, `DEAD_CODE`, `PRE_COMMIT`) single-agent. Spawn subagents conditionally during `INVESTIGATION` or `REVIEW` if high uncertainty warrants multi-angle exploration.
+  - **`DEEP_PARALLEL` (Full Multi-Agent)**: When requested (`並行探索モード`, `Spikeコンペ`), unleash parallel investigation, competitive tracer spikes, and multi-specialist review.
+- **Subagent Parallelism & Safe Isolation Playbook**:
+  - **Isolated Workspaces**: Always use `Workspace: "branch"` when spawning subagents for tracer spikes or code evaluation. Never permit concurrent mutations on a shared (`inherit`) workspace.
+  - **Competitive Tracer Spikes**: In `TRACER_BULLET`, spawn competing technical approaches across separate branch workspaces. Use `python3 tools/orchestrator/arbiter.py` to automatically select the winning implementation based on in-process contract test pass rate and minimal drift.
+  - **Reactive Aggregation**: Do not poll. Rely on reactive wakeups. Aggregate parallel findings into a unified Markdown Artifact on Canvas instead of flooding conversation context.
 
 ## Language Standards (Dual-First-Class: Go & Python)
 

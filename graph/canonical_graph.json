@@ -1,55 +1,96 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "2.0.0",
   "graph_id": "ai_inst_portable_loop",
   "description": "Canonical State Transition Graph for Agentic Architecture Pattern",
   "entry_node": "INVESTIGATION",
+  "execution_profiles": {
+    "economy": {
+      "description": "Force single-agent execution across all nodes to minimize token usage and latency",
+      "allow_subagents": false,
+      "max_parallel_workers": 1
+    },
+    "balanced": {
+      "description": "Default hybrid mode: single-agent implementation, fan-out for complex investigation and specialist review",
+      "allow_subagents": true,
+      "max_parallel_workers": 3
+    },
+    "deep_parallel": {
+      "description": "Full multi-agent exploration with parallel tracer spikes and specialist audits",
+      "allow_subagents": true,
+      "max_parallel_workers": 5
+    }
+  },
   "nodes": {
     "INVESTIGATION": {
       "skill": "skills/investigation/SKILL.md",
       "permission_level": "READ_ONLY",
       "human_gate": false,
+      "execution_topology": "MULTI_AGENT_FAN_OUT",
+      "fan_in_policy": "FACT_UNION",
+      "subagent_roles": ["code_ast_inspector", "log_history_analyst", "external_doc_researcher"],
       "description": "Fact gathering, hypothesis separation, unknown declaration"
     },
     "TRACER_BULLET": {
       "skill": "skills/tracer-bullet/SKILL.md",
       "permission_level": "WORKSPACE_MUTATE",
       "human_gate": false,
+      "execution_topology": "HYBRID_COMPETITIVE",
+      "fan_in_policy": "ARBITRATION_BY_CONTRACT",
+      "subagent_roles": ["tracer_spike_worker"],
       "description": "Minimal viable end-to-end implementation and contract locking"
     },
     "TEST_FIRST": {
       "skill": "skills/test-first/SKILL.md",
       "permission_level": "WORKSPACE_MUTATE",
       "human_gate": false,
+      "execution_topology": "SINGLE_AGENT",
+      "fan_in_policy": "NOT_APPLICABLE",
+      "subagent_roles": [],
       "description": "Coverage expansion (Examples -> Contracts -> Invariants) via PBT"
     },
     "REVIEW": {
       "skill": "skills/review/SKILL.md",
       "permission_level": "READ_ONLY",
       "human_gate": false,
-      "description": "Code quality, maintainability, performance, security review"
+      "execution_topology": "MULTI_AGENT_FAN_OUT",
+      "fan_in_policy": "RISK_LEDGER_MERGE",
+      "subagent_roles": ["concurrency_race_reviewer", "security_permission_reviewer", "architecture_boundary_reviewer"],
+      "description": "Adversarial self-critique (Devil's Advocate), YAGNI elimination, Negative Quota, and contract invariance"
     },
     "ARCHITECTURE": {
       "skill": "skills/architecture/SKILL.md",
       "permission_level": "WORKSPACE_MUTATE",
       "human_gate": false,
+      "execution_topology": "SINGLE_AGENT",
+      "fan_in_policy": "NOT_APPLICABLE",
+      "subagent_roles": [],
       "description": "Architecture drift evaluation (NO_CHANGE, MINOR_UPDATE, STRUCTURAL_ADJUST)"
     },
     "DEAD_CODE_CLEANUP": {
       "skill": "skills/dead-code-cleanup/SKILL.md",
       "permission_level": "WORKSPACE_MUTATE",
       "human_gate": false,
+      "execution_topology": "SINGLE_AGENT",
+      "fan_in_policy": "NOT_APPLICABLE",
+      "subagent_roles": [],
       "description": "Post-implementation code reduction and dead code deletion"
     },
     "PRE_COMMIT_LEAK_REVIEW": {
       "skill": "skills/pre-commit-leak-review/SKILL.md",
       "permission_level": "READ_ONLY",
       "human_gate": false,
+      "execution_topology": "SINGLE_AGENT",
+      "fan_in_policy": "NOT_APPLICABLE",
+      "subagent_roles": [],
       "description": "Pre-commit leak, privacy, secret exposure review"
     },
     "HUMAN_DECISION": {
       "skill": null,
       "permission_level": "TERMINAL_HALT",
       "human_gate": true,
+      "execution_topology": "HUMAN_GATE",
+      "fan_in_policy": "HUMAN_INSPECTION",
+      "subagent_roles": [],
       "description": "Mandatory human review gate when structural drift occurs"
     }
   },

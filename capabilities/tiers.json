@@ -1,5 +1,5 @@
 {
-  "schema_version": "1.0.0",
+  "schema_version": "1.1.0",
   "description": "Capability Tier definitions and fallback degradation policies for AI agents",
   "tiers": {
     "routine": {
@@ -64,5 +64,14 @@
     "DEAD_CODE_CLEANUP": "standard",
     "PRE_COMMIT_LEAK_REVIEW": "routine",
     "HUMAN_DECISION": null
+  },
+  "subagent_role_tier_mapping": {
+    "code_ast_inspector": "frontier",
+    "log_history_analyst": "standard",
+    "external_doc_researcher": "routine",
+    "tracer_spike_worker": "standard",
+    "concurrency_race_reviewer": "frontier",
+    "security_permission_reviewer": "frontier",
+    "architecture_boundary_reviewer": "frontier"
   }
 }

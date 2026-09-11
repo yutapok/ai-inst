@@ -1,44 +1,50 @@
 ---
 name: Code and Architecture Review
-description: Comprehensive review for architecture, security, performance, and tech-debt.
+description: Fast, zero-bloat adversarial self-critique enforcing YAGNI, MVP lean core, and contract invariance while blocking confirmation bias.
 ---
 
-# Review Procedures
+# Adversarial Self-Review (Devil's Advocate Protocol)
 
-This skill is used to perform a deep, heuristic review of the codebase. Unlike `drift-check` which is rigid and deterministic, this review surfaces potential improvements, architectural trade-offs, and security concerns.
+このSkillは、直前の実装に対するエージェント自身の「甘い判断・自己正当化バイアス」を物理的に排除し、コードとテストを最小のMVP状態（Lean Core）に削ぎ落とすための敵対的セルフレビューである。
 
-## Review Dimensions
+## 3つの絶対ルール (Inviolable Rules)
 
-When instructed to review the code, evaluate it against the following dimensions:
+1. **現状追認・承認（褒めること）の禁止**:
+   「問題ありません」「適切に実装されています」「LGTM」等の承認文言の出力を禁止する。
+2. **Negative Quota（最低2点の指摘ノルマ）**:
+   以下のいずれかの観点から、改善・削ぎ落とすべき箇所を必ず2点以上特定して出力しなければならない（見つからない場合は「これ以上削れない理由」を行単位で説明せよ）。
+   - **YAGNI違反**: 1箇所でしか使われていないInterface、先回りした汎用化引数、不要な抽象化ラッパー、過剰なファイル分割。
+   - **過剰テスト**: 内部プライベート関数に対する過剰なモックテスト、変更に脆い実装結合テスト。
+   - **契約の脆さ**: 空文字、巨大入力、異常終了時のエラーハンドリング漏れや未処理パニック（Panic / Uncaught Exception）の余地。
+3. **Hard Boundary, Lean Core**:
+   外部契約（CLI入出力・終了コード・エラー分類）のみをインプロセス統合テスト（Tier A: `app.Run`）で厳格に固定し、内部実装は最も愚直で短いコード（単一関数・単一構造体）に留める。
 
-### 1. Architecture
-- **Trade-off Analysis**: Are there better patterns (caching, async, event-driven) for the current requirements?
-- **Coupling**: Are modules loosely coupled?
-- **Distributed Processing**: Are there eventual consistency issues in distributed operations?
-- **Implied ADR Formalization**: Review any temporary files in `.antigravity/reports/tmp/implied-adr/implied-adr-*.md`. Determine if these decisions should be promoted to a formal ADR, modified, or discarded.
+## レビューの観点 (Audit Lenses)
 
-### 2. Security
-- **Vulnerabilities**: Are there known patterns of vulnerability (SQLi, XSS, etc.)?
-- **Information Leakage**: Are sensitive data or tokens being logged or exposed?
-- **Defender's Advantage**: Is the system robust enough to limit blast radius upon compromise?
+### ① YAGNI & 差分マイナス化 (Subtraction over Addition)
+- この変更で追加された行のうち、**削除しても契約テストが通る行**はないか？
+- 将来の拡張を先回りした汎用引数や設定項目が含まれていないか？
+- 中間ラッパーや不要なヘルパー関数をインライン化（直書き）できないか？
 
-### 3. Code (Maintainability & Optimization)
-- **Performance**: Are there memory allocation hotspots or inefficient algorithms?
-- **Readability**: Can the code be refactored for better clarity and maintainability?
+### ② 契約保護と後戻り防止 (Rollback Prevention)
+- CLI引数、標準入力、標準出力、終了コードがインプロセス統合テスト（`app.Run`）でロックされているか？
+- 想定外の入力で未捕捉パニックが発生する余地はないか？
 
-## Output Format
+### ③ テストの過剰性排除 (MVP Test Suite)
+- 内部のプライベート実装に結合した脆いモックテストを書いていないか？
+- 外部契約の検証に必要な最小限のテストケース（正常系1件＋代表的異常系1件＋PBT不変条件）に絞られているか？
 
-The output must be an actionable Markdown checklist formatted as `.antigravity/reports/ql-report-latest.md`. Use `[ ]` for each finding so the human can easily triage and check `[x]` the ones they want to fix.
+## 出力フォーマット (Kill / Keep / Fix Checklist)
+
+冗長なレポート作成によるボトルネック化を禁止する。以下の極小フォーマット（10行以内）で出力し、直ちに修正または `DEAD_CODE_CLEANUP` へ移行せよ。
 
 ```markdown
-# QL Report [Date]
-
-## Architecture
-- [ ] [Issue Title]: [Description of issue and proposed fix]
-
-## Security
-- [ ] [Issue Title]: [Description of issue and proposed fix]
-
-## Code (Optimization & Maintainability)
-- [ ] [Issue Title]: [Description of issue and proposed fix]
+### 👿 Adversarial Self-Review
+- **Contract Health**: [PASS (Locked) | BREACH (Specify)]
+- **Kill (削除・インライン化候補 - 最低1点)**:
+  1. `[file:line]`: [不要な抽象化/関数の理由と削除提案]
+  2. `[file:line]`: [過剰なテスト/設定の理由と削除提案]
+- **Fix (契約保護・脆さ対策 - 0〜1点)**:
+  - `[file:line]`: [エッジケース処理の愚直な追加]
+- **Action**: [TRIGGER_CLEANUP | RETRY_TRACER | PROCEED]
 ```

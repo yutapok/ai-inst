@@ -11,8 +11,7 @@ This workflow initiates a Quality Loop (QL) review. It performs a comprehensive 
 1. **Perform Review**
    - Read the codebase or the specified section.
    - Search for "Implied ADR" notes in `.antigravity/reports/tmp/implied-adr/implied-adr-*.md`.
-   - Use the `review` skill to evaluate Architecture, Security, and Code Quality.
-   - *(Required skill: `.antigravity/skills/review/SKILL.md`)*
+   - Apply the `review` skill (`.antigravity/skills/review/SKILL.md`) using the Adversarial Protocol: enforce Negative Quota (identify >= 2 YAGNI / over-engineering points), verify Hard Boundary contract tests, and eliminate premature abstractions.
 
 2. **Generate Report**
    - Output the findings as a triagable checklist in `.antigravity/reports/ql-report-latest.md`.
